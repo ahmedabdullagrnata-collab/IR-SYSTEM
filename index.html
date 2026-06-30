@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IR Submission System — Package 9</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f8fafc;--surface:#ffffff;--surface2:#f1f5f9;--border:#e2e8f0;--accent:#0ea5e9;--accent2:#38bdf8;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--text:#1e293b;--muted:#64748b;--muted2:#475569;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-brand{display:flex;align-items:center;gap:10px;}
+.topbar-brand span{font-size:13px;font-weight:600;letter-spacing:.5px;color:var(--accent2);text-transform:uppercase;}
+.pkg{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;font-family:'IBM Plex Mono',monospace;}
+.topbar-nav{display:flex;gap:4px;}
+.nav-btn{background:none;border:none;color:var(--muted2);cursor:pointer;padding:6px 14px;border-radius:6px;font-size:13px;font-family:inherit;transition:all .15s;}
+.nav-btn.active,.nav-btn:hover{background:var(--surface2);color:var(--text);}
+.nav-btn.active{color:var(--accent2);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.main{max-width:1100px;margin:0 auto;padding:24px 20px;}
+.section-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+.eng-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.eng-bar label{font-size:12px;color:var(--muted2);white-space:nowrap;font-weight:500;}
+.eng-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 14px;border-radius:8px;font-family:inherit;font-size:14px;transition:border-color .15s;min-width:220px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+.eng-select:focus{outline:none;border-color:var(--accent);}
+.eng-select option{background:var(--surface2);}
+.eng-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;display:none;}
+.eng-avatar.show{display:flex;}
+.eng-name-display{font-size:13px;font-weight:600;color:var(--accent2);display:none;}
+.eng-name-display.show{display:block;}
+.itp-search-wrap{position:relative;margin-bottom:12px;}
+.itp-search{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px 10px 36px;border-radius:8px;font-family:inherit;font-size:13px;transition:border-color .15s;}
+.itp-search:focus{outline:none;border-color:var(--accent);}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;}
+.itp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:8px;max-height:320px;overflow-y:auto;padding-right:4px;}
+.itp-grid::-webkit-scrollbar{width:4px;}
+.itp-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.itp-option{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .12s;user-select:none;}
+.itp-option:hover{border-color:var(--accent);background:#0ea5e910;}
+.itp-option.selected{border-color:var(--accent);background:#0ea5e918;}
+.itp-check{width:16px;height:16px;min-width:16px;border:2px solid var(--border);border-radius:4px;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .12s;}
+.itp-option.selected .itp-check{background:var(--accent);border-color:var(--accent);color:#fff;}
+.itp-num{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;margin-bottom:2px;}
+.itp-name{font-size:12px;color:var(--text);line-height:1.4;}
+.itp-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3;}
+.cat-badge{font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace;}
+.cat-C{background:#6366f120;color:#818cf8;}
+.cat-M{background:#0ea5e920;color:#38bdf8;}
+.cat-E{background:#f59e0b20;color:#fbbf24;}
+.done-badge{font-size:9px;background:#22c55e20;color:#22c55e;padding:2px 6px;border-radius:3px;}
+.queue-empty{text-align:center;padding:32px;color:var(--muted);font-size:13px;}
+.queue-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+.queue-item.has-error{border-color:var(--red);}
+.queue-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.queue-itp-num{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;background:var(--accent);color:#fff;padding:3px 8px;border-radius:5px;}
+.queue-itp-name{font-size:13px;font-weight:500;flex:1;}
+.queue-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;transition:all .12s;}
+.queue-remove:hover{background:#ef444420;color:var(--red);}
+.prereq-row{font-size:11px;color:var(--muted2);margin-bottom:8px;}
+.prereq-tag{display:inline-block;background:var(--surface);border:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:1px 6px;border-radius:3px;margin:0 2px;}
+.prereq-tag.ok{border-color:var(--green);color:var(--green);}
+.prereq-tag.miss{border-color:var(--orange);color:var(--orange);}
+.villas-input{width:100%;background:#fff;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:13px;transition:border-color .15s;resize:none;height:38px;}
+.villas-input:focus{outline:none;border-color:var(--accent);height:auto;min-height:38px;}
+.villas-input::placeholder{color:var(--muted);font-family:inherit;}
+.villas-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.villa-tag{font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--surface);border:1px solid var(--border);padding:2px 8px;border-radius:4px;display:flex;align-items:center;gap:4px;}
+.villa-tag.dup{border-color:var(--red);color:var(--red);}
+.villa-tag.inv{border-color:var(--orange);color:var(--orange);}
+.remove-v{cursor:pointer;color:var(--muted);font-size:12px;}
+.remove-v:hover{color:var(--red);}
+.submit-wrap{display:flex;justify-content:flex-end;margin-top:20px;gap:10px;}
+.btn{padding:10px 24px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:flex;align-items:center;gap:8px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-primary:disabled{background:var(--muted);cursor:not-allowed;opacity:.5;}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--muted2);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent2);}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.stat-val{font-size:28px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.stat-val.blue{color:var(--accent2);}
+.stat-val.green{color:var(--green);}
+.stat-val.orange{color:var(--orange);}
+.stat-val.purple{color:#818cf8;}
+.stat-label{font-size:11px;color:var(--muted);margin-top:4px;}
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.filter-input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-family:inherit;font-size:12px;min-width:140px;}
+.filter-input:focus{outline:none;border-color:var(--accent);}
+select.filter-input option{background:var(--surface2);}
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:var(--surface2);padding:10px 14px;text-align:left;font-weight:600;color:var(--muted2);font-size:11px;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.mono{font-family:'IBM Plex Mono',monospace;}
+.villa-chips{display:flex;flex-wrap:wrap;gap:3px;}
+.v-chip{font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--surface2);border:1px solid var(--border);padding:1px 5px;border-radius:3px;}
+.toast-container{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:8px;}
+.toast{padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;animation:slideUp .2s ease;min-width:280px;text-align:center;}
+.toast.success{background:#15803d;color:#fff;}
+.toast.error{background:#991b1b;color:#fff;}
+.toast.warning{background:#92400e;color:#fff;}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.modal-bg{position:fixed;inset:0;background:#00000080;z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:480px;width:90%;animation:pop .15s ease;}
+@keyframes pop{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:8px;}
+.modal-body{font-size:13px;color:var(--muted2);margin-bottom:20px;line-height:1.7;white-space:pre-wrap;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+.page{display:none;}
+.page.active{display:block;}
+.loading-overlay{position:fixed;inset:0;background:#f8fafc99;z-index:300;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:13px;color:var(--muted2);}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+  .brand-text { font-size: 13px; font-weight: 600; letter-spacing: .5px; color: var(--accent2); text-transform: uppercase; }
+  @media (max-width: 600px) {
+    .topbar { padding: 0 12px; height: 52px; }
+    .brand-text { font-size: 11px; letter-spacing: 0; }
+    .pkg { font-size: 10px; padding: 2px 6px; }
+    .nav-btn { padding: 5px 8px; font-size: 18px; }
+    .nav-label { display: none; }
+    .topbar-nav { gap: 2px; }
+    #lastSync { display: none; }
+    .main { padding: 16px 12px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .eng-bar { padding: 12px; gap: 10px; }
+    .eng-select { min-width: 160px; font-size: 13px; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <span class="pkg">PKG 9</span>
+    <span class="brand-text">IR Submission System</span>
+  </div>
+  <div class="topbar-nav">
+    <button class="nav-btn active" onclick="showPage('submit')">📋 <span class="nav-label">Submit IR</span></button>
+    <button class="nav-btn" onclick="showPage('dashboard')">📊 <span class="nav-label">Dashboard</span></button>
+    <button class="nav-btn" onclick="showPage('suggest')">💡 <span class="nav-label">Suggestions</span></button>
+  </div>
+</div>
+
+<!-- SUBMIT PAGE -->
+<div class="page active" id="page-submit">
+<div class="main">
+
+  <div class="eng-bar">
+    <label>Engineer</label>
+    <select class="eng-select" id="engSelect" onchange="onEngSelect()">
+      <option value="">— Select your name —</option>
+      <option value="Ali Mirza">Ali Mirza</option>
+      <option value="Hussain Mansoor">Hussain Mansoor</option>
+      <option value="Ali Ghazwan">Ali Ghazwan</option>
+      <option value="Sayed Ali">Sayed Ali</option>
+    </select>
+    <div class="eng-avatar" id="engAvatar"></div>
+    <div class="eng-name-display" id="engNameDisplay"></div>
+    <div id="engZoneInfo" style="display:none;font-size:11px;color:#0ea5e9;background:#e0f2fe;border:1px solid #bae6fd;border-radius:6px;padding:4px 10px;max-width:400px;"></div>
+    <div style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+      <span style="font-size:11px;color:var(--muted)">My List:</span>
+      <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;" onclick="loadMyList()">Load</button>
+      <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;" onclick="saveMyList()">Save</button>
+    </div>
+  </div>
+
+  <div class="section-title">Select ITPs</div>
+  <div class="card">
+    <div class="itp-search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="itp-search" id="itpSearch" placeholder="Search by ITP number or name..." oninput="filterITPs()">
+    </div>
+    <div class="itp-grid" id="itpGrid"></div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px;align-items:center;">
+      <span id="selCount" style="font-size:12px;color:var(--muted);">0 selected</span>
+      <button class="btn btn-primary" style="padding:8px 18px;" onclick="addSelectedToQueue()">Add to Queue →</button>
+    </div>
+  </div>
+
+  <div class="section-title">IR Submission Queue</div>
+  <div id="queueContainer"><div class="queue-empty">No ITPs selected yet — choose from the list above</div></div>
+
+  <div class="submit-wrap">
+    <button class="btn btn-outline" onclick="clearQueue()">Clear All</button>
+    <button class="btn btn-outline" id="reviewBtn" onclick="showLastSubmission()" style="display:none">👁 Review Last</button>
+    <button class="btn btn-primary" id="submitBtn" onclick="submitAll()" disabled>✅ Submit Requests</button>
+  </div>
+</div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page" id="page-dashboard">
+<div class="main">
+    <div class="stats-row" style="grid-template-columns:repeat(2,1fr);">
+    <div class="stat-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="stat-val orange" id="st-itps">0</div>
+          <div class="stat-label">Active ITPs Submitted</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px;font-weight:700;color:#64748b" id="st-itps-pct">0%</div>
+          <div style="font-size:10px;color:#94a3b8">of 163</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;background:#e2e8f0;border-radius:4px;height:6px;">
+        <div id="prog-itps" style="height:6px;border-radius:4px;background:#f59e0b;width:0%;transition:width .5s;"></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="stat-val blue" id="st-pairs">0</div>
+          <div class="stat-label">Villa-ITP Pairs Completed</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px;font-weight:700;color:#64748b" id="st-pairs-pct">0%</div>
+          <div style="font-size:10px;color:#94a3b8">of 51,834</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;background:#e2e8f0;border-radius:4px;height:6px;">
+        <div id="prog-pairs" style="height:6px;border-radius:4px;background:#0ea5e9;width:0%;transition:width .5s;"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Register baseline info -->
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;font-size:12px;">
+    <span style="color:#15803d;font-weight:600;">📋 Register Baseline (pre-loaded):</span>
+    <span style="color:#166534;" id="st-baseline-pairs">Calculating...</span>
+    <span style="color:#166534;" id="st-baseline-villas"></span>
+    <span style="color:#166534;" id="st-baseline-itps"></span>
+    <span style="color:#15803d;font-weight:600;margin-right:auto;" id="st-baseline-date"></span>
+  </div>
+  <div class="section-title">Submission Log</div>
+  <div class="filter-bar">
+    <input class="filter-input" id="f-eng" placeholder="Filter: Engineer" oninput="renderTable()">
+    <input class="filter-input" id="f-itp" placeholder="Filter: ITP No." oninput="renderTable()">
+    <input class="filter-input" id="f-villa" placeholder="Filter: Villa No." oninput="renderTable()">
+    <select class="filter-input" id="f-cat" onchange="renderTable()">
+      <option value="">All Types</option>
+      <option value="C">Civil</option>
+      <option value="M">Mechanical</option>
+      <option value="E">Electrical</option>
+    </select>
+    <input class="filter-input" id="f-date" type="date" oninput="renderTable()" style="min-width:140px;">
+    <button class="btn btn-outline" style="padding:7px 14px;font-size:12px;" onclick="document.getElementById('f-date').value='';renderTable()">Today</button>
+    <button class="btn btn-outline" style="padding:7px 14px;font-size:12px;" onclick="exportCSV()">⬇ Export Excel</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Engineer</th><th>ITP</th><th>Cat.</th><th>Description</th><th>Villas</th><th>Date / Time</th><th></th></tr></thead>
+      <tbody id="dashTable"></tbody>
+    </table>
+  </div>
+  <div id="dashEmpty" style="text-align:center;padding:48px;color:var(--muted);display:none;">
+    <div style="font-size:36px;margin-bottom:12px;">📭</div>
+    <div style="font-size:13px;">No submissions yet</div>
+  </div>
+</div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+<div class="modal-bg" id="modalBg" style="display:none;">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Loading data...</div>
+</div>
+
+<script>
+
+var ENGINEERS=["Ali Mirza","Hussain Mansoor","Ali Ghazwan","Sayed Ali",""];
+
+var ITP_DATA=[
+[1,'C','Plot Co-ordinates','Check villa coordinates before excavation'],
+[2,'M','Drainage Pipes - UG','Inspect underground drainage pipes'],
+[3,'E','Electrical Duct Pipes - UG','Inspect underground electrical conduits'],
+[4,'C','Compaction Test','Compaction test at foundation level'],
+[5,'M','Drainage Pipes - Raft Slab','Inspect drainage pipes on raft slab'],
+[6,'E','Electrical Conduits - Raft Slab','Inspect electrical conduits on raft slab'],
+[7,'C','Raft Slab','Inspect rebar, formwork & pre-pour check'],
+[8,'C','Column GF - Rebars & Kickers','Inspect column rebars & kickers — GF'],
+[9,'C','Column GF - Formwork','Inspect column formwork — GF'],
+[10,'C','Blockwork GF - Setting Out','Check first course alignment — GF'],
+[11,'C','Blockwork GF - Boundary 3 Layers','Boundary wall with 3 infill courses'],
+[12,'C','DFT Test (Bitumen)','Bitumen coating thickness test'],
+[13,'C','Blockwork GF - 6 Line','First 6 courses of blockwork — GF'],
+[14,'C','Staircase GF','Staircase formwork — GF to 1st landing'],
+[15,'C','Blockwork GF - Lintels & 12 Line','Blockwork to 12 courses + lintels — GF'],
+[16,'E','Electrical Conduits - Ring Beam FF','Electrical conduits in Ring Beam — FF'],
+[17,'M','Plumbing Pipes - Ring Beam FF','Drainage pipes in Ring Beam — FF'],
+[18,'C','Ring Beam FF','Ring Beam formwork & rebar — FF'],
+[19,'E','FF Electrical Conduits - HCS','Electrical conduits on HCS — FF'],
+[20,'C','HCS FF','HCS level & bearing check — FF'],
+[21,'C','Column FF - Rebars & Kickers','Column rebars & kickers — FF'],
+[22,'C','Column FF - Formwork','Column formwork — FF'],
+[23,'C','Blockwork FF - Setting Out','First course alignment — FF'],
+[24,'C','Blockwork FF - 6 Line','First 6 courses — FF'],
+[25,'C','Staircase FF','Staircase formwork — FF to 3rd landing'],
+[26,'C','Blockwork FF - Lintels & 12 Line','Blockwork to 12 courses + lintels — FF'],
+[27,'E','Electrical Conduits - Ring Beam RF','Electrical conduits in Ring Beam — Roof'],
+[28,'M','Plumbing Pipes - Ring Beam RF','Drainage pipes in Ring Beam — Roof'],
+[29,'C','Ring Beam RF','Ring Beam formwork & rebar — Roof'],
+[30,'E','RF Electrical Conduits - HCS','Electrical conduits on HCS — Roof'],
+[31,'C','HCS RF','HCS level & bearing check — Roof'],
+[32,'C','Column HR - Formwork','Column formwork — Headroom'],
+[33,'C','Blockwork HR - Setting Out','First course alignment — Headroom & Parapet'],
+[34,'C','Blockwork HR - 12 Line','12 courses of blockwork — Headroom'],
+[35,'E','Electrical Conduits - Ring Beam HR','Electrical conduits in Ring Beam — Headroom'],
+[36,'M','Plumbing Pipes - Ring Beam HR','Drainage pipes in Ring Beam — Headroom'],
+[37,'C','Ring Beam HR','Ring Beam formwork & rebar — Headroom'],
+[38,'E','HR Electrical Conduits - HCS','Electrical conduits on HCS — SHR'],
+[39,'C','HCS HR','HCS level & bearing check — Headroom'],
+[40,'C','Roof Parapet - Blocks/Coping','Parapet blocks with coping — Roof'],
+[41,'C','HR Parapet - Blocks/Coping','Parapet blocks with coping — Headroom'],
+[42,'M','GF Drainage Pipes - Above Ground','Above-ground drainage pipes — GF'],
+[43,'M','GF PPR Pipes','Cold & hot PPR pipes — GF'],
+[44,'E','Electrical Back Box - GF','Back boxes & conduits before plaster — GF'],
+[45,'C','Plaster GF - Surface Preparation','Mesh & surface prep before plaster — GF'],
+[46,'C','Plaster GF - Rushcoat','Rushcoat with beacons — GF'],
+[47,'C','Thermal Plaster - Ext Prep FK','External thermal plaster prep — FK'],
+[48,'C','Thermal Plaster - Prep FK+K','Thermal plaster prep — FK + Kitchen'],
+[49,'C','Thermal Plaster - Ext Rush FK','Thermal plaster rushcoat — FK External'],
+[50,'C','Thermal Plaster - Rush FK+K','Thermal plaster rushcoat — FK + Kitchen'],
+[51,'M','FF PPR Pipes','Cold & hot PPR pipes — FF'],
+[52,'E','Electrical Back Box - FF','Back boxes & conduits before plaster — FF'],
+[53,'C','Plaster FF - Surface Preparation','Mesh & surface prep before plaster — FF'],
+[54,'C','Plaster FF - Rushcoat','Rushcoat with beacons — FF'],
+[55,'C','Plaster HR - Surface Preparation','Mesh & surface prep before plaster — Headroom'],
+[56,'C','Plaster HR - Rushcoat','Rushcoat — Headroom'],
+[57,'E','Electrical Points - Parapet','Electrical points in parapet & headroom'],
+[58,'C','Parapet - Surface Preparation','Mesh & surface prep — Parapet'],
+[59,'C','Parapet - Rush Coat','Rushcoat with beacons — Parapet'],
+[60,'C','Floor Screed GF - Preparation','Floor screed level prep — GF'],
+[61,'C','Floor Screed FF+HR - Preparation','Floor screed level prep — FF + Headroom'],
+[62,'C','Floor Screed GF - Concrete','Floor screed pour — GF'],
+[63,'C','Floor Screed FF+HR - Concrete','Floor screed pour — FF + Headroom'],
+[64,'C','Toilet Tiles - Setting Out','Toilet wall tile layout check'],
+[65,'C','Toilet Tiles - Installation','Toilet wall tile installation'],
+[66,'C','Waterproof Wet Area - Preparation','Wet area waterproofing prep'],
+[67,'C','Waterproof Wet Area - Water Test','24-hour ponding test — wet areas'],
+[68,'C','Waterproof Roof Area - Preparation','Roof waterproofing prep'],
+[69,'C','Waterproof Roof Area - PU Foam','PU foam application before coating'],
+[70,'C','Waterproof Roof Area - Leak Test','48-hour leak test — roof'],
+[71,'C','Waterproof Roof Area - Screed Prep','Geotextile & slope check before screed'],
+[72,'C','Waterproof Roof Area - Screed','Lightweight concrete screed — roof'],
+[73,'C','MEP Base','AC base & water tank base after pour'],
+[74,'M','MEP Services','Water tank, AC base & roof pipework'],
+[75,'C','Boundary Wall - Front','Front boundary wall completion'],
+[76,'C','Boundary Wall - Rear','Rear boundary wall completion'],
+[77,'C','Plaster External Front - Preparation','External plaster prep — front wall'],
+[78,'C','Plaster External Rear - Preparation','External plaster prep — rear wall'],
+[79,'C','Plaster External Front - Rushcoat','External rushcoat — front wall'],
+[80,'C','Plaster External Rear - Rushcoat','External rushcoat — rear wall'],
+[81,'C','Plaster Normal Ext Prep FK Rear','Normal external plaster prep — FK rear'],
+[82,'C','Plaster Normal Ext Rush FK Rear','Normal external plaster rushcoat — FK rear'],
+[83,'E','Wiring - GF','Cable wiring — GF & external'],
+[84,'E','Wiring - Armour Cables','Armour cable connections check'],
+[85,'C','GF Paint Preparation','Walls & ceilings prep for paint — GF'],
+[86,'C','GF Painting - Filler','Filler coat on walls & ceilings — GF'],
+[87,'C','GF Painting - Primer','Primer coat before paint — GF'],
+[88,'E','Wiring - FF/HR','Cable wiring — FF & Headroom'],
+[89,'C','FF Paint Preparation','Walls & ceilings prep for paint — FF'],
+[90,'C','FF Paint - Filler','Filler coat on walls — FF'],
+[91,'C','FF Paint - Primer','Primer coat before paint — FF'],
+[92,'E','DB Installation','DB installation & connections'],
+[93,'E','MDB Installation','MDB installation & cable connections'],
+[94,'E','Cutout','Cutout installation'],
+[95,'E','Earthing Rod Installation','Earthing rod installation & testing'],
+[96,'E','External Electrical Points','External electrical points before EIFS'],
+[97,'C','Thermal Plaster Ext Prep - Encr.','Thermal external plaster prep — Encroachment'],
+[98,'C','Normal Plaster Ext Prep - Encr.','Normal external plaster prep — Encroachment'],
+[99,'C','Thermal Plaster Ext Rush - Encr.','Thermal external plaster rushcoat — Encroachment'],
+[100,'C','Normal Plaster Ext Rush - Encr.','Normal external plaster rushcoat — Encroachment'],
+[101,'C','EIFS Preparation','EIFS surface prep & base track fixing'],
+[102,'C','EIFS EPS Board','EPS board installation & corner bead'],
+[103,'C','EIFS Base Coat','EIFS base coat application'],
+[104,'C','EIFS Primer Coat','EIFS primer coat application'],
+[105,'C','EIFS 1st Coat Painting','EIFS first coat — full facade'],
+[106,'C','Parapet - Paint Preparation','Parapet plaster prep for painting'],
+[107,'C','Parapet - Filler & Primer','Filler & primer on parapet'],
+[108,'C','Painting External - Preparation','Boundary wall & garage prep for external paint'],
+[109,'C','Waterproof Roof - Bituprimer','Bituprimer before membrane — Roof'],
+[110,'C','Waterproof HR - Bituprimer','Bituprimer before membrane — Headroom'],
+[111,'C','Waterproof Roof - Membrane','Membrane completion — Roof'],
+[112,'C','Waterproof Headroom - Membrane','Membrane completion — Headroom'],
+[113,'C','Ceiling Grid - Toilets','Suspended ceiling grid — Toilets'],
+[114,'C','Ceiling Tiles - Toilets','Ceiling tile installation — Toilets'],
+[115,'M','Pipe Insulation','Drainage pipe insulation — Kitchen'],
+[116,'C','Ceiling Grid - Kitchen','Ceiling grid — Kitchen'],
+[117,'C','Ceiling Tiles - Kitchen','Ceiling tiles — Kitchen'],
+[118,'C','Ceiling - Garage','Ceiling insulation & grid — Garage'],
+[119,'M','Drainage Pipes - Exhaust','Exhaust fan ductwork before ceiling close'],
+[120,'C','Ceiling - Garage (Gypsum)','Gypsum board & fire damper — Garage'],
+[121,'M','PPR Pipes - Roof Routing','PPR pipes on roof with valves'],
+[122,'C','Kitchen Floor Tiles - Grouting','Kitchen & porch floor tile grouting'],
+[123,'C','Toilet Tiles - Grouting','Toilet tile grouting with thresholds'],
+[124,'C','Epoxy Paint','Epoxy paint — pump room'],
+[125,'C','Paving - FDT Test','FDT test at paving foundation level'],
+[126,'C','Paving - Final','Final paving with covers & levels'],
+[127,'C','Handrail - 1st Fix','Staircase handrail — 1st fix'],
+[128,'C','Aluminum Doors & Windows - 1st Fix','Aluminum doors & windows — 1st fix'],
+[129,'C','Kitchen Cabinet - 1st Fix','Kitchen cabinet frame — 1st fix'],
+[130,'C','Wooden Doors - 1st Fix','Wooden door frames & doors — 1st fix'],
+[131,'C','Meter Cabinet','Water & electrical meter cabinet installation'],
+[132,'C','Cat Ladder','Cat ladder final installation'],
+[133,'C','Aluminium Flashing','Aluminum flashing with sealant'],
+[134,'C','Handrail - Final','Handrail final installation with joints'],
+[135,'C','Aluminum Doors & Windows - Final','Final installation of aluminum doors, windows & gate'],
+[136,'C','Kitchen Cabinet - Final','Kitchen cabinet final with counter & sink'],
+[137,'C','Rolling Shutter','Rolling shutter with motor & connections'],
+[138,'C','Rolling Shutter T&C','Rolling shutter testing & commissioning'],
+[139,'C','Wooden Doors - Final','Final wooden doors including main entrance'],
+[140,'C','Painting Internal - 1st Coat','Internal painting 1st coat — all floors'],
+[141,'C','Ceiling Garage - 1st Coat Paint','Garage ceiling 1st coat painting'],
+[142,'C','Parapet - 1st Coat Paint','Parapet 1st coat painting'],
+[143,'C','Painting External - 1st Coat','External 1st coat — boundary wall & garage'],
+[144,'M','Water Tank Installation','Water tank installation in Headroom'],
+[145,'M','MEP Services - GF Pump','GF tank, pump & control installation'],
+[146,'M','Water Heater Installation','Water heater with cover & connections'],
+[147,'M','Flow Test','CDP flow test & AC box leak test'],
+[148,'M','Sanitary Installation','Sanitary ware & mixers — operation test'],
+[149,'M','LPG - Pressure Test','Gas line installation & 1.5 Bar pressure test'],
+[150,'M','LPG - Full System','Full gas system with safety valve & detector'],
+[151,'M','Water Supply Line Pressure Test','Water supply pressure test — 5 Bar / 6 hrs'],
+[152,'E','Switches & Sockets','Switches & socket installation — all floors'],
+[153,'E','Light Fittings','Light fitting installation & bathroom extract fans'],
+[154,'E','Testing & Commissioning','Final electrical testing & commissioning'],
+[155,'C','Final Leak Test - Roof & Headroom','Final leak test on roof before cool roof paint'],
+[156,'C','Cool Roof Paint - Preparation','Cool roof surface preparation'],
+[157,'C','Cool Roof Paint - 1st Coat','Cool roof 1st coat application'],
+[158,'C','Cool Roof Paint - Final Coat','Cool roof final coat application'],
+[159,'E','SNAG - Electrical','Final electrical snagging'],
+[160,'M','SNAG - Mechanical','Final mechanical snagging'],
+[161,'C','SNAG - Civil','Final civil snagging'],
+[162,'M','Smart Meter - Water','Smart water meter installation'],
+[163,'E','Smart Meter - Electrical','Smart electrical meter installation']
+];
+
+
+var ENGINEER_ZONES = {
+  'Ali Mirza': [12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,273,274,275,276,277,278,279,280,281,282,283,284],
+  'Sayed Ali': [29,30,31,32,33,34,35,36,37,38,39,40,48,49,50,51,52,53,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,132,133,134,135,136,137,138,139,140,141,142,143,246,247,248,249,250,251,252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,285,286,287,288,289,290,291,292,293],
+  'Hussain Mansoor': [6,7,8,41,160,161,162,163],
+  'Ali Ghazwan': [1,2,3,4,5,9,10,11,28,42,43,44,45,46,47,54,55,56,57,58,59,60,61,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318]
+};
+
+var ITP_PRIORITY={
+  1:"LOW",
+  2:"CRITICAL",
+  3:"CRITICAL",
+  4:"CRITICAL",
+  5:"LOW",
+  6:"MEDIUM",
+  7:"CRITICAL",
+  8:"CRITICAL",
+  9:"CRITICAL",
+  10:"CRITICAL",
+  11:"LOW",
+  12:"LOW",
+  13:"CRITICAL",
+  14:"LOW",
+  15:"CRITICAL",
+  16:"MEDIUM",
+  17:"LOW",
+  18:"CRITICAL",
+  19:"MEDIUM",
+  20:"CRITICAL",
+  21:"CRITICAL",
+  22:"CRITICAL",
+  23:"CRITICAL",
+  24:"CRITICAL",
+  25:"LOW",
+  26:"CRITICAL",
+  27:"MEDIUM",
+  28:"LOW",
+  29:"CRITICAL",
+  30:"MEDIUM",
+  31:"CRITICAL",
+  32:"MEDIUM",
+  33:"MEDIUM",
+  34:"LOW",
+  35:"LOW",
+  36:"LOW",
+  37:"LOW",
+  38:"LOW",
+  39:"LOW",
+  40:"MEDIUM",
+  41:"LOW",
+  42:"LOW",
+  43:"LOW",
+  44:"LOW",
+  45:"LOW",
+  46:"LOW",
+  47:"LOW",
+  48:"LOW",
+  49:"LOW",
+  50:"LOW",
+  51:"MEDIUM",
+  52:"MEDIUM",
+  53:"MEDIUM",
+  54:"MEDIUM",
+  55:"MEDIUM",
+  56:"MEDIUM",
+  57:"MEDIUM",
+  58:"MEDIUM",
+  59:"MEDIUM",
+  60:"LOW",
+  61:"MEDIUM",
+  62:"LOW",
+  63:"LOW",
+  64:"LOW",
+  65:"LOW",
+  66:"LOW",
+  67:"LOW",
+  68:"MEDIUM",
+  69:"MEDIUM",
+  70:"MEDIUM",
+  71:"LOW",
+  72:"LOW",
+  73:"LOW",
+  74:"LOW",
+  75:"LOW",
+  76:"LOW",
+  77:"LOW",
+  78:"LOW",
+  79:"LOW",
+  80:"LOW",
+  81:"LOW",
+  82:"LOW",
+  83:"LOW",
+  84:"LOW",
+  85:"LOW",
+  86:"LOW",
+  87:"LOW",
+  88:"LOW",
+  89:"LOW",
+  90:"LOW",
+  91:"LOW",
+  92:"LOW",
+  93:"LOW",
+  94:"LOW",
+  95:"LOW",
+  96:"LOW",
+  97:"LOW",
+  98:"LOW",
+  99:"LOW",
+  100:"LOW",
+  101:"LOW",
+  102:"LOW",
+  103:"LOW",
+  104:"LOW",
+  105:"LOW",
+  106:"LOW",
+  107:"LOW",
+  108:"LOW",
+  109:"LOW",
+  110:"LOW",
+  111:"LOW",
+  112:"LOW",
+  113:"LOW",
+  114:"LOW",
+  115:"LOW",
+  116:"LOW",
+  117:"LOW",
+  118:"LOW",
+  119:"LOW",
+  120:"LOW",
+  121:"LOW",
+  122:"LOW",
+  123:"LOW",
+  124:"LOW",
+  125:"LOW",
+  126:"LOW",
+  127:"LOW",
+  128:"LOW",
+  129:"LOW",
+  130:"LOW",
+  131:"LOW",
+  132:"LOW",
+  133:"LOW",
+  134:"LOW",
+  135:"LOW",
+  136:"LOW",
+  137:"LOW",
+  138:"LOW",
+  139:"LOW",
+  140:"LOW",
+  141:"LOW",
+  142:"LOW",
+  143:"LOW",
+  144:"LOW",
+  145:"LOW",
+  146:"LOW",
+  147:"LOW",
+  148:"LOW",
+  149:"LOW",
+  150:"LOW",
+  151:"LOW",
+  152:"LOW",
+  153:"LOW",
+  154:"LOW",
+  155:"LOW",
+  156:"LOW",
+  157:"LOW",
+  158:"LOW",
+  159:"LOW",
+  160:"LOW",
+  161:"LOW",
+  162:"LOW",
+  163:"LOW"
+};
+
+var PREREQ={
+1:'NA',2:'NA',3:'NA',4:'2&3',5:'2',6:'3',7:'4',8:'7',9:'8',10:'9',
+11:'7',12:'11',13:'10',14:'13',15:'13',16:'6',17:'5',18:'15',19:'16',
+20:'18',21:'20',22:'21',23:'22',24:'23',25:'24',26:'24',27:'19',28:'17',
+29:'26',30:'27',31:'29',32:'31',33:'32',34:'33',35:'30',36:'28',37:'34',
+38:'35',39:'37',40:'33',41:'39',42:'61',43:'20',44:'19',45:'43&44',
+46:'45',47:'43&44',48:'43&44',49:'47',50:'48',51:'31',52:'30',53:'51&52',
+54:'53',55:'51',56:'55',57:'40',58:'57',59:'58',60:'46',61:'54&56',
+62:'60',63:'61',64:'46&53',65:'64',66:'42',67:'66',68:'59',69:'68',
+70:'69',71:'70',72:'71',73:'112',74:'59',75:'11',76:'11',77:'75',
+78:'76',79:'77',80:'78',81:'44',82:'81',83:'44',84:'63',85:'63',
+86:'85',87:'86',88:'57',89:'70',90:'89',91:'90',92:'84',93:'84',
+94:'131',95:'93',96:'57',97:'59',98:'59',99:'97',100:'98',101:'96',
+102:'101',103:'102',104:'103',105:'104',106:'72',107:'106',108:'79',
+109:'105',110:'72',111:'73',112:'110',113:'65',114:'113',115:'42',
+116:'87',117:'116',118:'67',119:'42',120:'118',121:'111',122:'43',
+123:'67',124:'105',125:'147',126:'125',127:'91',128:'91',129:'122',
+130:'91',131:'108',132:'105',133:'111&112',134:'127',135:'128',136:'129',
+137:'108',138:'137',139:'130',140:'91',141:'120',142:'107',143:'108',
+144:'74',145:'124',146:'121',147:'74',148:'123',149:'129',150:'149',
+151:'145',152:'88&91',153:'141',154:'153',155:'121',156:'155',157:'156',
+158:'157',159:'154',160:'148',161:'155',162:'131',163:'131'
+};
+
+var queue=[],submissions=[],selectedITPs=new Set();
+
+function getInitials(name){return name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();}
+
+// ── GOOGLE SHEETS ──
+
+function loadFromSheet(){
+  try {
+    var saved = localStorage.getItem('ir_submissions');
+    if(saved){
+      var parsed = JSON.parse(saved);
+      var now = Date.now();
+      var EXPIRY_MS = 12 * 60 * 60 * 1000; // 12 hours
+      // Keep only entries WITH savedAt that are less than 12h old
+      // Entries without savedAt are old/legacy — discard them
+      submissions = parsed.filter(function(r){
+        return r.savedAt && (now - r.savedAt) < EXPIRY_MS;
+      });
+      localStorage.setItem('ir_submissions', JSON.stringify(submissions));
+    }
+    renderITPGrid(document.getElementById('itpSearch').value);
+    if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+  } catch(e){ submissions=[]; }
+  hideLoading();
+}
+
+function pushToSheet(newRows){
+  try {
+    var now = Date.now();
+    submissions.forEach(function(r){ if(!r.savedAt) r.savedAt = now; });
+    // Clean expired before saving
+    var EXPIRY_MS = 12 * 60 * 60 * 1000;
+    submissions = submissions.filter(function(r){ return !r.savedAt || (now - r.savedAt) < EXPIRY_MS; });
+    localStorage.setItem('ir_submissions', JSON.stringify(submissions));
+    return Promise.resolve({status:'ok'});
+  } catch(e){
+    return Promise.reject(e);
+  }
+}
+
+function deleteFromFirebase(key){
+  return fetch(FIREBASE_URL + '/submissions/' + key + '.json', {
+    method: 'DELETE'
+  }).then(function(){ loadFromSheet(); });
+}
+
+// ── ENGINEER SELECT ──
+function onEngSelect(){
+  var name=document.getElementById('engSelect').value;
+  var av=document.getElementById('engAvatar');
+  var nd=document.getElementById('engNameDisplay');
+  if(name){
+    av.textContent=getInitials(name);av.className='eng-avatar show';
+    var zone = ENGINEER_ZONES[name] || [];
+    nd.textContent=name+' — '+zone.length+' villas';
+    nd.className='eng-name-display show';
+    // Show zone info
+    var zoneInfo = document.getElementById('engZoneInfo');
+    if(zoneInfo){
+      var ranges = getVillaRanges(zone);
+      zoneInfo.textContent = 'Your villas: '+ranges;
+      zoneInfo.style.display='block';
+    }
+  } else {
+    av.className='eng-avatar';nd.className='eng-name-display';
+    var zoneInfo=document.getElementById('engZoneInfo');
+    if(zoneInfo) zoneInfo.style.display='none';
+  }
+}
+
+function getVillaRanges(villas){
+  if(!villas||!villas.length) return '';
+  var sorted=villas.slice().sort(function(a,b){return a-b;});
+  var ranges=[], start=sorted[0], end=sorted[0];
+  for(var i=1;i<sorted.length;i++){
+    if(sorted[i]===end+1){ end=sorted[i]; }
+    else { ranges.push(start===end?String(start):start+'-'+end); start=end=sorted[i]; }
+  }
+  ranges.push(start===end?String(start):start+'-'+end);
+  return ranges.join(', ');
+}
+
+// ── ITP GRID ──
+function renderITPGrid(filter){
+  filter=(filter||'').toLowerCase();
+  var grid=document.getElementById('itpGrid');
+  var items=ITP_DATA.filter(function(d){
+    return !filter||String(d[0]).includes(filter)||d[2].toLowerCase().includes(filter)||d[3].toLowerCase().includes(filter);
+  });
+  grid.innerHTML=items.map(function(d){
+    var n=d[0],cat=d[1],name=d[2],desc=d[3];
+    var sel=selectedITPs.has(n);
+    var dc=submissions.filter(function(s){return s.itpNum===n;}).reduce(function(a,s){return a+s.villas.length;},0);
+    var naCount = NA_STATE ? Object.keys(NA_STATE).filter(function(v){return NA_STATE[v].indexOf(n)!==-1;}).length : 0;
+    var db=dc>0?'<span class="done-badge">&#10003; '+dc+' villas</span>':'';
+    var naB=naCount>0?'<span style="font-size:9px;background:#fef3c720;color:#f59e0b;padding:2px 5px;border-radius:3px;font-weight:700;">N/A '+naCount+'</span>':''
+    return '<label class="itp-option'+(sel?' selected':'')+'" onclick="toggleITP('+n+')">'+
+      '<div class="itp-check">'+(sel?'&#10003;':'')+'</div>'+
+      '<div class="itp-info">'+
+        '<div style="display:flex;gap:6px;align-items:center;margin-bottom:3px;">'+
+          '<span class="itp-num" style="color:var(--accent2)">ITP '+n+'</span>'+
+          '<span class="cat-badge cat-'+cat+'">'+cat+'</span>'+db+
+        '</div>'+
+        '<div class="itp-name">'+name+'</div>'+
+        '<div class="itp-desc">'+desc+'</div>'+
+      '</div></label>';
+  }).join('');
+}
+function filterITPs(){renderITPGrid(document.getElementById('itpSearch').value);}
+function toggleITP(n){
+  if(selectedITPs.has(n)) selectedITPs.delete(n); else selectedITPs.add(n);
+  renderITPGrid(document.getElementById('itpSearch').value);
+  document.getElementById('selCount').textContent=selectedITPs.size+' selected';
+}
+function addSelectedToQueue(){
+  if(!selectedITPs.size){toast('Select at least one ITP first','warning');return;}
+  var added=0;
+  selectedITPs.forEach(function(n){
+    if(!queue.find(function(q){return q.itpNum===n;})){queue.push({itpNum:n,villas:[],_raw:''});added++;}
+  });
+  selectedITPs.clear();
+  document.getElementById('selCount').textContent='0 selected';
+  renderITPGrid(document.getElementById('itpSearch').value);
+  renderQueue();
+  added?toast(added+' ITP(s) added to queue','success'):toast('Already in queue','warning');
+}
+
+// ── QUEUE ──
+function isNA(itpNum,villa){return NA_STATE[villa]&&NA_STATE[villa].indexOf(itpNum)!==-1;}
+function isDup(itpNum,villa){
+  if(isNA(itpNum,villa)) return true;
+  if(VILLA_STATE[villa]&&VILLA_STATE[villa][itpNum]!==undefined) return true;
+  return submissions.some(function(s){return s.itpNum===itpNum&&s.villas.includes(villa);});
+}
+function renderQueue(){
+  var c=document.getElementById('queueContainer');
+  if(!queue.length){c.innerHTML='<div class="queue-empty">No ITPs selected yet</div>';document.getElementById('submitBtn').disabled=true;return;}
+  c.innerHTML=queue.map(function(item,idx){
+    var d=ITP_DATA.find(function(x){return x[0]===item.itpNum;});
+    var n=d[0],cat=d[1],name=d[2],desc=d[3];
+    var ps=PREREQ[n]||'NA',ph='';
+    if(ps==='NA') ph='<span style="color:var(--green)">No prerequisite &#10003;</span>';
+    else ps.split('&').forEach(function(p){
+      var num=parseInt(p.trim());
+      if(!isNaN(num)){
+        var done=submissions.some(function(s){return s.itpNum===num;});
+        ph+='<span class="prereq-tag '+(done?'ok':'miss')+'">ITP '+num+(done?' &#10003;':' &#9888;')+'</span> ';
+      }
+    });
+    var tags=item.villas.map(function(v){
+      var dup=isDup(n,v),inv=v<1||v>318;
+      return '<span class="villa-tag'+(dup?' dup':inv?' inv':'')+'">'
+        +v+(dup?' &#9888; dup':inv?' &#10007; invalid':'')
+        +'<span class="remove-v" onclick="removeVilla('+idx+','+v+')">&times;</span></span>';
+    }).join('');
+    var err=item.villas.some(function(v){return isDup(n,v)||v<1||v>318;});
+    return '<div class="queue-item'+(err?' has-error':'')+'">'+
+      '<div class="queue-header">'+
+        '<span class="queue-itp-num">ITP '+n+'</span>'+
+        '<span class="cat-badge cat-'+cat+'">'+cat+'</span>'+
+        '<span class="queue-itp-name">'+name+'</span>'+
+        '<button class="queue-remove" onclick="removeFromQueue('+idx+')">&times;</button>'+
+      '</div>'+
+      '<div class="prereq-row">Requires: '+ph+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">'+desc+'</div>'+
+      '<textarea class="villas-input" placeholder="Villa numbers separated by comma or space — e.g: 1, 5, 12, 30" oninput="parseVillas('+idx+',this.value)">'+(item._raw||'')+'</textarea>'+
+      '<div class="villas-tags">'+tags+'</div>'+
+      (item.villas.length>0?'<div style="margin-top:8px;font-size:11px;color:var(--muted2)">Revision: '+item.villas.map(function(v){var r=getNextRevision(v,n);return '<span style="font-family:monospace;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px;margin:2px;">V'+v+' → R'+r+'</span>';}).join(' ')+'</div>':'')+
+    '</div>';
+  }).join('');
+  document.getElementById('submitBtn').disabled=!queue.some(function(q){return q.villas.length>0;});
+}
+var _parseTimer={};
+function parseVillas(idx,raw){
+  // Save raw text immediately — no re-render yet
+  queue[idx]._raw=raw;
+  queue[idx].villas=[];  // clear while typing so no false warnings
+  // Clear tags area without full re-render
+  var items=document.querySelectorAll('.villas-tags');
+  if(items[idx]) items[idx].innerHTML='';
+  var qItems=document.querySelectorAll('.queue-item');
+  if(qItems[idx]) qItems[idx].classList.remove('has-error');
+  // Only parse + validate after user stops typing for 800ms
+  if(_parseTimer[idx]) clearTimeout(_parseTimer[idx]);
+  _parseTimer[idx]=setTimeout(function(){
+    var arr=[];
+    raw.split(/[,\s،,]+/).forEach(function(s){
+      s=s.trim();
+      if(s==='') return;
+      var n=Number(s);
+      if(!isNaN(n)&&n>0) arr.push(n);
+    });
+    queue[idx].villas=arr.filter(function(v,i){return arr.indexOf(v)===i;});
+    // Only re-render this queue item's tags, not the whole queue
+    renderQueueItem(idx);
+  },800);
+}
+
+function renderQueueItem(idx){
+  var item=queue[idx];
+  if(!item) return;
+  var d=ITP_DATA.find(function(x){return x[0]===item.itpNum;});
+  var n=d[0];
+  var tags=item.villas.map(function(v){
+    var dup=isDup(n,v),inv=v<1||v>318;
+    return '<span class="villa-tag'+(dup?' dup':inv?' inv':'')+'">'
+      +v+(dup?' &#9888; dup':inv?' &#10007; invalid':'')
+      +'<span class="remove-v" onclick="removeVilla('+idx+','+v+')">&times;</span></span>';
+  }).join('');
+  var qItems=document.querySelectorAll('.queue-item');
+  var tagsEls=document.querySelectorAll('.villas-tags');
+  if(tagsEls[idx]) tagsEls[idx].innerHTML=tags;
+  var hasErr=item.villas.some(function(v){return isDup(n,v)||v<1||v>318;});
+  if(qItems[idx]){
+    if(hasErr) qItems[idx].classList.add('has-error');
+    else qItems[idx].classList.remove('has-error');
+  }
+  // Update submit button
+  document.getElementById('submitBtn').disabled=!queue.some(function(q){return q.villas.length>0;});
+}
+function removeVilla(idx,v){queue[idx].villas=queue[idx].villas.filter(function(x){return x!==v;});queue[idx]._raw=queue[idx].villas.join(', ');renderQueue();}
+function removeFromQueue(idx){queue.splice(idx,1);renderQueue();}
+function clearQueue(){
+  if(!queue.length) return;
+  showModal('Clear Queue','Remove all ITPs from the current queue?',[
+    {label:'Cancel',cls:'btn-outline',fn:closeModal},
+    {label:'Clear',cls:'btn-primary',fn:function(){queue=[];renderQueue();closeModal();}}
+  ]);
+}
+
+// ── SUBMIT ──
+function checkPrerequisites(){
+  // Returns detailed warnings: for each villa, which prereq ITP is missing
+  var warnings=[];
+  queue.forEach(function(item){
+    if(!item.villas.length) return;
+    var ps=PREREQ[item.itpNum]||'NA';
+    if(ps==='NA') return;
+    var prereqNums=ps.split('&').map(function(p){return parseInt(p.trim());}).filter(function(n){return !isNaN(n);});
+    prereqNums.forEach(function(preNum){
+      // Check per villa
+      var missingVillas=item.villas.filter(function(v){
+        return !isSubmittedForVillaITP(v, preNum);
+      });
+      if(missingVillas.length>0){
+        warnings.push('ITP '+item.itpNum+': Villas ['+missingVillas.join(', ')+'] missing prerequisite ITP '+preNum);
+      }
+    });
+  });
+  return warnings;
+}
+
+function submitAll(){
+  var eng=document.getElementById('engSelect').value;
+  if(!eng){toast('Please select your name first','error');return;}
+
+  // Check prerequisites first
+  var prereqWarnings=checkPrerequisites();
+  if(prereqWarnings.length){
+    showModal('⚠️ Prerequisite Warning',
+      'The following ITPs have unmet prerequisites:\n\n'+prereqWarnings.join('\n')+'\n\nDo you want to submit anyway, or go back to review?',
+      [
+        {label:'Go Back & Review',cls:'btn-outline',fn:function(){closeModal();}},
+        {label:'Submit Anyway',cls:'btn-primary',fn:function(){closeModal();doSubmit(eng);}}
+      ]
+    );
+    return;
+  }
+  doSubmit(eng);
+}
+
+function doSubmit(eng){
+  var now=new Date();
+  var ds=now.toLocaleDateString('en-GB')+' '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  var newRows=[],errors=[],submitted=[],total=0;
+  queue.forEach(function(item){
+    if(!item.villas.length) return;
+    var dups=item.villas.filter(function(v){return isDup(item.itpNum,v);});
+    var inv=item.villas.filter(function(v){return v<1||v>318;});
+    if(dups.length) errors.push('ITP '+item.itpNum+': Villa(s) '+dups.join(', ')+' already submitted');
+    if(inv.length) errors.push('ITP '+item.itpNum+': Villa(s) '+inv.join(', ')+' out of range (1-318)');
+    var clean=item.villas.filter(function(v){return !isDup(item.itpNum,v)&&v>=1&&v<=318;});
+    if(clean.length){
+      var d=ITP_DATA.find(function(x){return x[0]===item.itpNum;});
+      submissions.push({eng:eng,itpNum:item.itpNum,villas:clean,date:ds,cat:d[1]});
+      newRows.push([eng,item.itpNum,clean.join(', '),ds,d[1],d[2]]);
+      submitted.push({itpNum:item.itpNum,name:d[2],cat:d[1],villas:clean,date:ds});
+      total+=clean.length;
+    }
+  });
+  if(!newRows.length){toast('No valid data to submit','warning');return;}
+  showLoading('Saving...');
+  pushToSheet(newRows).then(function(){
+    hideLoading();
+    renderITPGrid(document.getElementById('itpSearch').value);
+    // Save last submission for review
+    window._lastSubmission={eng:eng,items:submitted,date:ds,errors:errors};
+    queue=[];renderQueue();
+    document.getElementById('reviewBtn').style.display='flex';
+    showReviewModal(window._lastSubmission,errors,total);
+  });
+}
+
+function showReviewModal(sub,errors,total){
+  // Build review table HTML
+  var rows=sub.items.map(function(it){
+    return '<tr style="border-bottom:1px solid #1e2d45">'+
+      '<td style="padding:6px 10px;font-family:monospace;color:#38bdf8">ITP '+it.itpNum+'</td>'+
+      '<td style="padding:6px 10px;color:#94a3b8;font-size:11px">'+it.name+'</td>'+
+      '<td style="padding:6px 10px"><span style="font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;background:#6366f120;color:#818cf8">'+it.cat+'</span></td>'+
+      '<td style="padding:6px 10px;font-family:monospace;font-size:11px;color:#e2e8f0">'+it.villas.join(', ')+'</td>'+
+    '</tr>';
+  }).join('');
+  var errHtml=errors.length?'<div style="margin-top:12px;padding:10px;background:#ef444415;border:1px solid #ef444440;border-radius:8px;font-size:11px;color:#ef4444"><b>Skipped:</b><br>'+errors.join('<br>')+'</div>':'';
+  var content='<div style="max-height:360px;overflow-y:auto;">'+
+    '<div style="margin-bottom:12px;font-size:12px;color:#64748b">'+sub.date+' &nbsp;|&nbsp; Engineer: <b style="color:#38bdf8">'+sub.eng+'</b> &nbsp;|&nbsp; <b style="color:#22c55e">'+total+' villa(s) submitted</b></div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12px">'+
+      '<thead><tr style="background:#1a2235">'+
+        '<th style="padding:6px 10px;text-align:left;color:#64748b;font-size:10px">ITP</th>'+
+        '<th style="padding:6px 10px;text-align:left;color:#64748b;font-size:10px">NAME</th>'+
+        '<th style="padding:6px 10px;text-align:left;color:#64748b;font-size:10px">CAT</th>'+
+        '<th style="padding:6px 10px;text-align:left;color:#64748b;font-size:10px">VILLAS</th>'+
+      '</tr></thead>'+
+      '<tbody>'+rows+'</tbody>'+
+    '</table>'+
+    errHtml+
+  '</div>';
+  // Use a wider modal
+  document.getElementById('modalTitle').innerHTML='✅ Submission Complete — Review';
+  document.getElementById('modalBody').innerHTML=content;
+  document.getElementById('modalBody').style.cssText='font-size:13px;color:var(--muted2);margin-bottom:20px;line-height:1.7;max-height:400px;overflow-y:auto;';
+  var ac=document.getElementById('modalActions');
+  ac.innerHTML='<button class="btn btn-outline" onclick="showLastSubmission()">👁 View Again Later</button>'+
+               '<button class="btn btn-primary" onclick="closeModal()">Close</button>';
+  document.getElementById('modalBg').style.display='flex';
+  document.querySelector('.modal').style.maxWidth='700px';
+}
+
+function showLastSubmission(){
+  closeModal();
+  if(!window._lastSubmission){toast('No recent submission found','warning');return;}
+  var total=window._lastSubmission.items.reduce(function(s,i){return s+i.villas.length;},0);
+  showReviewModal(window._lastSubmission,[],total);
+}
+
+// ── MY LIST ──
+function saveMyList(){
+  var name=document.getElementById('engSelect').value;
+  if(!name){toast('Select your name first','error');return;}
+  localStorage.setItem('irlist_'+name.toLowerCase().replace(' ','_'),JSON.stringify(queue.map(function(q){return q.itpNum;})));
+  toast('Your list saved','success');
+}
+function loadMyList(){
+  var name=document.getElementById('engSelect').value;
+  if(!name){toast('Select your name first','error');return;}
+  var raw=localStorage.getItem('irlist_'+name.toLowerCase().replace(' ','_'));
+  if(!raw){toast('No saved list found for this name','warning');return;}
+  JSON.parse(raw).forEach(function(n){
+    if(!queue.find(function(q){return q.itpNum===n;})) queue.push({itpNum:n,villas:[],_raw:''});
+  });
+  renderQueue();
+  toast('Your saved list loaded','success');
+}
+
+// ── DASHBOARD ──
+function renderDashboard(){
+  // Live submissions stats
+  var totalVillas=submissions.reduce(function(s,r){return s+r.villas.length;},0);
+  var uniqueITPs=new Set(submissions.map(function(r){return r.itpNum;})).size;
+  var uniqueEngs=new Set(submissions.map(function(r){return r.eng;})).size;
+  
+  // Count unique villa-ITP pairs from live submissions
+  var livePairs=new Set();
+  submissions.forEach(function(r){r.villas.forEach(function(v){livePairs.add(v+'-'+r.itpNum);});});
+
+  // Count from VILLA_STATE (register baseline)
+  var basePairs=0, baseVillas=new Set(), baseITPs=new Set();
+  Object.keys(VILLA_STATE).forEach(function(v){
+    Object.keys(VILLA_STATE[v]).forEach(function(itp){
+      basePairs++;
+      baseVillas.add(parseInt(v));
+      baseITPs.add(parseInt(itp));
+    });
+  });
+
+  // Combined (baseline + live, no double count)
+  var allPairs=new Set();
+  Object.keys(VILLA_STATE).forEach(function(v){
+    Object.keys(VILLA_STATE[v]).forEach(function(itp){allPairs.add(v+'-'+itp);});
+  });
+  submissions.forEach(function(r){r.villas.forEach(function(v){allPairs.add(v+'-'+r.itpNum);});});
+
+  var allVillas=new Set();
+  allPairs.forEach(function(p){allVillas.add(parseInt(p.split('-')[0]));});
+  var allITPs=new Set();
+  allPairs.forEach(function(p){allITPs.add(parseInt(p.split('-')[1]));});
+
+  var TOTAL_PAIRS=318*163; // 51,834
+
+  // Update cards
+  document.getElementById('st-itps').textContent=allITPs.size;
+  document.getElementById('st-itps-pct').textContent=Math.round(allITPs.size/163*100)+'%';
+  document.getElementById('prog-itps').style.width=Math.round(allITPs.size/163*100)+'%';
+
+  document.getElementById('st-pairs').textContent=allPairs.size.toLocaleString();
+  document.getElementById('st-pairs-pct').textContent=Math.round(allPairs.size/TOTAL_PAIRS*100)+'%';
+  document.getElementById('prog-pairs').style.width=Math.min(100,Math.round(allPairs.size/TOTAL_PAIRS*100))+'%';
+
+
+  // Baseline info
+  var totalNA=0; if(typeof NA_STATE!=='undefined') Object.keys(NA_STATE).forEach(function(v){totalNA+=NA_STATE[v].length;});
+  document.getElementById('st-baseline-pairs').textContent=basePairs.toLocaleString()+' pairs | '+totalNA+' N/A';
+  document.getElementById('st-baseline-villas').textContent=baseVillas.size+' villas';
+  document.getElementById('st-baseline-itps').textContent=baseITPs.size+' ITPs';
+  document.getElementById('st-baseline-date').textContent='Last updated: '+REGISTER_UPDATE_DATE;
+
+  renderTable();
+}
+function renderTable(){
+  var fE=document.getElementById('f-eng').value.trim().toLowerCase();
+  var fI=document.getElementById('f-itp').value.trim();
+  var fV=document.getElementById('f-villa').value.trim();
+  var fC=document.getElementById('f-cat').value;
+  var fD=document.getElementById('f-date').value.trim();
+  var rows=submissions.filter(function(r){
+    if(fE&&!r.eng.toLowerCase().includes(fE)) return false;
+    if(fI&&!String(r.itpNum).includes(fI)) return false;
+    if(fV&&!r.villas.some(function(v){return String(v).includes(fV);})) return false;
+    if(fC&&r.cat!==fC) return false;
+    if(fD&&!String(r.date||'').includes(fD.split('-').reverse().join('/'))) return false;
+    return true;
+  });
+  var tbody=document.getElementById('dashTable');
+  var empty=document.getElementById('dashEmpty');
+  if(!rows.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=rows.map(function(r,i){
+    var info=ITP_DATA.find(function(d){return d[0]===r.itpNum;})||[r.itpNum,'?','Unknown',''];
+    var chips=r.villas.map(function(v){return '<span class="v-chip">'+v+'</span>';}).join('');
+    var realIdx=submissions.indexOf(r);
+    return '<tr>'+
+      '<td class="mono" style="color:var(--muted)">'+(i+1)+'</td>'+
+      '<td style="font-weight:500">'+r.eng+'</td>'+
+      '<td><span class="mono" style="color:var(--accent2)">ITP '+r.itpNum+'</span><br><span style="font-size:11px;color:var(--muted)">'+info[2]+'</span></td>'+
+      '<td><span class="cat-badge cat-'+info[1]+'">'+info[1]+'</span></td>'+
+      '<td style="font-size:11px;color:var(--muted2);max-width:180px;white-space:normal">'+info[3]+'</td>'+
+      '<td><div class="villa-chips">'+chips+'</div></td>'+
+      '<td class="mono" style="font-size:11px;color:var(--muted);white-space:nowrap">'+r.date+'</td>'+
+      '<td><button onclick="deleteSubmission('+realIdx+')" style="background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:11px;">🗑</button></td>'+
+    '</tr>';
+  }).join('');
+}
+// Hardcoded list of ITPs to highlight (manually specified)
+var MANUAL_HIGHLIGHT_ITPS = [18, 20, 29, 31, 37];
+
+function hasCrossDisciplinePrereq(itpNum){
+  return MANUAL_HIGHLIGHT_ITPS.indexOf(itpNum) !== -1;
+}
+
+function getCrossPrereqList(itpNum){
+  return [];
+}
+
+function exportCSV(){
+  var fE=document.getElementById('f-eng').value.trim().toLowerCase();
+  var fI=document.getElementById('f-itp').value.trim();
+  var fV=document.getElementById('f-villa').value.trim();
+  var fC=document.getElementById('f-cat').value;
+  var fD=document.getElementById('f-date').value.trim();
+
+  var filtered=submissions.filter(function(r){
+    if(fE&&!r.eng.toLowerCase().includes(fE)) return false;
+    if(fI&&!String(r.itpNum).includes(fI)) return false;
+    if(fV&&!r.villas.some(function(v){return String(v).includes(fV);})) return false;
+    if(fC&&r.cat!==fC) return false;
+    if(fD&&!String(r.date||'').includes(fD.split('-').reverse().join('/'))) return false;
+    return true;
+  });
+
+  if(!filtered.length){toast('No data to export for current filter','warning');return;}
+
+  var dateLabel = fD ? fD : new Date().toISOString().slice(0,10);
+  var catColors={'C':'#E0E7FF','M':'#DBEAFE','E':'#FEF3C7'};
+  var catNames={'C':'Civil','M':'Mechanical','E':'Electrical'};
+
+  var html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
+  html+='<head><meta charset="UTF-8"><style>';
+  html+='body{font-family:Arial,sans-serif;font-size:10pt;}';
+  html+='table{border-collapse:collapse;width:100%;}';
+  html+='td,th{border:1px solid #999;padding:6px 10px;}';
+  html+='.title{background:#0c2340;color:#fff;font-size:13pt;font-weight:bold;text-align:left;}';
+  html+='.subtitle{background:#f1f5f9;font-size:9pt;text-align:left;color:#475569;}';
+  html+='.hdr{background:#1e3a5f;color:#fff;font-weight:bold;text-align:center;}';
+  html+='.cross{background:#FED7AA !important;}';
+  html+='.cross-label{color:#9A3412;font-weight:bold;font-size:8pt;}';
+  html+='.eng-cell{font-weight:bold;color:#1e3a5f;}';
+  html+='.itp-cell{font-family:Consolas,monospace;font-weight:bold;color:#0c4a6e;}';
+  html+='.villa-cell{font-family:Consolas,monospace;}';
+  html+='.date-cell{font-size:9pt;color:#64748b;}';
+  html+='</style></head><body><table>';
+
+  html+='<tr><td colspan="6" class="title">IR Submission Report — Package 9 East Sitra Housing</td></tr>';
+  html+='<tr><td colspan="6" class="subtitle">Generated: '+new Date().toLocaleString('en-GB')+' &nbsp;|&nbsp; Records: '+filtered.length+' &nbsp;|&nbsp; Filter date: '+(fD||'All dates')+'</td></tr>';
+  html+='<tr><td colspan="6" style="background:#FED7AA;color:#9A3412;font-weight:bold;text-align:left;font-size:9pt;">🟠 Orange highlight = ITP requires a prior Electrical/Mechanical ITP from a different discipline — verify before approval</td></tr>';
+
+  html+='<tr>';
+  ['#','Engineer','ITP No.','ITP Name','Villas','Date / Time'].forEach(function(h){
+    html+='<th class="hdr">'+h+'</th>';
+  });
+  html+='</tr>';
+
+  filtered.forEach(function(r,i){
+    var info=ITP_DATA.find(function(d){return d[0]===r.itpNum;})||[r.itpNum,'?','Unknown',''];
+    var crossFlag=hasCrossDisciplinePrereq(r.itpNum);
+    var crossList=getCrossPrereqList(r.itpNum);
+    var rowClass=crossFlag?' class="cross"':'';
+    var catBg=catColors[info[1]]||'#fff';
+
+    html+='<tr'+rowClass+'>';
+    html+='<td style="text-align:center;color:#94a3b8;">'+(i+1)+'</td>';
+    html+='<td class="eng-cell">'+r.eng+'</td>';
+    html+='<td class="itp-cell" style="text-align:center;">ITP '+r.itpNum+'</td>';
+    html+='<td>'+info[2]+'</td>';
+    
+    html+='<td class="villa-cell">'+r.villas.join(', ')+'</td>';
+    html+='<td class="date-cell">'+r.date+'</td>';
+    html+='</tr>';
+  });
+
+  html+='</table></body></html>';
+
+  var blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='IR_Submissions_'+dateLabel+'.xls';
+  a.click();
+  toast('Exported '+filtered.length+' records','success');
+}
+
+
+function deleteSubmission(idx){
+  showModal('Delete Submission',
+    'Delete this IR submission? This cannot be undone.',
+    [
+      {label:'Cancel', cls:'btn-outline', fn:closeModal},
+      {label:'Delete', cls:'btn-primary', fn:function(){
+        var key = submissions[idx]._key;
+        submissions.splice(idx,1);
+        try{localStorage.setItem('ir_submissions', JSON.stringify(submissions));}catch(e){}
+        if(key) deleteFromFirebase(key);
+        closeModal();
+        renderDashboard();
+        toast('Submission deleted','warning');
+      }}
+    ]
+  );
+}
+
+// ── UTILS ──
+function showPage(p){
+  document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(x){x.classList.remove('active');});
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelector('.nav-btn[onclick="showPage(\''+p+'\')"]').classList.add('active');
+  if(p==='dashboard') renderDashboard();
+}
+function toast(msg,type){
+  var c=document.getElementById('toasts'),el=document.createElement('div');
+  el.className='toast '+(type||'success');el.textContent=msg;c.appendChild(el);
+  setTimeout(function(){el.remove();},3500);
+}
+function showModal(title,body,actions){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').textContent=body;
+  var ac=document.getElementById('modalActions');
+  ac.innerHTML=actions.map(function(a,i){return '<button class="btn '+a.cls+'" onclick="modalAction('+i+')">'+a.label+'</button>';}).join('');
+  window._ma=actions;document.getElementById('modalBg').style.display='flex';
+}
+function modalAction(i){window._ma[i].fn();}
+function closeModal(){document.getElementById('modalBg').style.display='none';}
+function showLoading(msg){document.getElementById('loadingText').textContent=msg||'Loading...';document.getElementById('loadingOverlay').style.display='flex';}
+function hideLoading(){document.getElementById('loadingOverlay').style.display='none';}
+
+
+;
+
+
+
+var REGISTER_UPDATE_DATE="30 Jun 2026";
+var REGISTER_PAIRS=10132;
+var VILLA_STATE={
+  1:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:1,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,57:0,58:0,60:0,62:0,76:0,78:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  2:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,60:0,62:0,76:0,78:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  3:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,57:0,58:0,60:0,62:0,75:0,76:0,78:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  4:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,57:0,58:0,60:0,62:0,75:0,76:0,78:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  5:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,57:0,58:0,60:0,62:0,76:0,78:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  6:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:2,12:0,13:0,14:1,15:1,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,43:0,44:0,45:0,46:0,47:0,48:0,50:0,51:0,52:0,53:0,54:0,55:0,56:0,57:0,58:0,59:0,60:0,61:0,62:0,63:0,64:0,65:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,85:0,96:0,97:0,98:0,99:0,100:0,101:0,102:0,103:0,104:0,105:0,108:0},
+  7:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:1,11:1,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,55:0,56:0,57:0,58:0,59:0,60:0,61:0,62:0,63:0,64:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,85:0,96:0,97:0,98:0,99:0,100:0,101:0,102:0,108:0},
+  8:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,55:0,56:0,57:0,58:0,59:0,60:0,61:0,62:0,63:0,64:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,85:0,96:0,97:0,98:0,99:0,100:0,101:0,102:0,108:0},
+  9:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,55:0,57:0,58:0,59:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  10:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:1,12:1,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,57:0,58:0,59:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  11:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:1,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,57:0,58:0,59:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  12:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:1,15:1,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,60:0,62:0,75:0,76:0,77:0,78:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  13:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  14:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:1,15:1,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:1,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,81:0,82:0,97:0,99:0},
+  15:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  16:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:1,9:1,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,43:0,44:0,45:0,46:1,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  17:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,81:0,82:0,97:0,99:0},
+  18:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  19:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:1,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  20:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  21:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  22:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,60:0,62:0,81:0,82:0,97:0,99:0},
+  23:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  24:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,60:0,62:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  25:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,81:0,82:0,97:0,99:0},
+  26:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:1,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,60:0,62:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  27:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,52:0,60:0,62:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  28:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,49:0,98:0,100:0},
+  29:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,75:0,76:0,81:0,82:0,98:0,100:0},
+  30:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,75:0,76:0,81:0,82:0,97:0,99:0},
+  31:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,75:0,76:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  32:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,47:0,48:0,49:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  33:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,47:0,48:0,49:0,50:0,81:0,98:0,100:0},
+  34:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,43:0,44:0,45:0,46:0,47:0,49:0,60:0,81:0,82:0,98:0,100:0},
+  35:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,43:0,44:0,45:0,46:0,47:0,49:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,81:0,82:0,98:0,100:0},
+  36:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,81:0,98:0,100:0},
+  37:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  38:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  39:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  40:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0},
+  41:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,42:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,55:0,56:0,57:0,58:0,59:0,60:0,61:0,62:0,63:0,68:0,69:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0,108:0},
+  42:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,14:0,15:0,47:0,49:0,98:0,100:0},
+  43:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0},
+  44:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0},
+  45:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0},
+  46:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,75:0,76:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  47:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  48:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,43:0,44:0,45:0,47:0,48:0,49:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  49:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  50:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  51:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,47:0,48:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  52:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  53:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  54:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,81:0,97:0,99:0},
+  55:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,81:0,97:0,98:0,99:0,100:0},
+  56:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  57:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,81:0,97:0,99:0},
+  58:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,81:0,82:0,98:0,100:0},
+  59:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,52:0,60:0,81:0,82:0,98:0,100:0},
+  60:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,81:0,82:0,98:0,100:0},
+  61:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  62:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,75:0,76:0,77:0,78:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  63:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,43:0,44:0,45:0,46:0,47:0,49:0,52:0,76:0,78:0,80:0,81:0,82:0,98:0,100:0},
+  64:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,76:0,78:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  65:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,76:0,78:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  66:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,76:0,81:0,82:0,98:0,100:0},
+  67:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  68:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  69:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  70:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,47:0,49:0,81:0,98:0,100:0},
+  71:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,47:0,48:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  72:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,75:0,76:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  73:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,75:0,76:0,81:0,82:0,98:0,100:0},
+  74:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,75:0,76:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  75:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,75:0,76:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  76:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  77:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,45:0,47:0,48:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  78:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  79:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  80:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:1,21:0,22:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  81:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,47:0,48:0,49:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  82:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  83:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,45:0,47:0,48:0,49:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  84:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  85:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  86:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  87:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  88:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0},
+  89:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,52:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0},
+  90:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0},
+  91:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0},
+  92:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0},
+  93:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,98:0,100:0},
+  94:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,76:0,78:0,80:0,81:0,82:0,98:0,100:0},
+  95:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,76:0,78:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  96:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,50:0,60:0,62:0,76:0,78:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  97:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,50:0,60:0,62:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  98:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  99:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,47:0,48:0,50:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  100:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,81:0,82:0,97:0,99:0},
+  101:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  102:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  103:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  104:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  105:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,44:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  106:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  107:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  108:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  109:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  110:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  111:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  112:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  113:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  114:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  115:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  116:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  117:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  118:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,60:0,81:0,82:0,98:0,100:0},
+  119:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,81:0,82:0,98:0,100:0},
+  120:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,81:0,82:0,98:0,100:0},
+  121:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  122:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  123:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,43:0,44:0,45:0,46:0,48:0,50:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  124:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:1,23:0,43:0,44:0,45:0,48:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  125:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  126:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  127:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  128:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  129:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,47:0,49:0,98:0,100:0},
+  130:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,43:0,44:0,47:0,49:0,97:0,98:0,99:0,100:0},
+  131:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,44:0,47:0,49:0,98:0,100:0},
+  132:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  133:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  134:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  135:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  136:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  137:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  138:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  139:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  140:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  141:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  142:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  143:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  144:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  145:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  146:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,49:0,98:0,100:0},
+  147:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,43:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  148:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,43:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  149:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,43:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  150:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,43:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  151:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  152:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  153:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  154:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  155:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,60:0,62:0,81:0,82:0,97:0,99:0},
+  156:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  157:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,60:0,62:0,75:0,76:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  158:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:1,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,45:0,47:0,48:0,49:0,50:0,75:0,76:0,97:0,98:0,99:0,100:0},
+  159:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,40:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,60:0,62:0,75:0,76:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  160:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:1,11:1,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,42:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,55:0,56:0,57:0,58:0,59:0,60:0,61:0,62:0,63:0,64:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,85:0,96:0,97:0,99:0,101:0,102:0,103:0,104:0,105:0,108:0},
+  161:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:1,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,42:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,55:0,56:0,57:0,58:0,59:0,60:0,61:0,62:0,63:0,64:0,65:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,85:0,96:0,97:0,98:0,99:0,100:0,101:0,102:0,103:0,104:0,105:0,108:0},
+  162:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:1,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:1,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,42:0,43:0,44:0,45:0,46:1,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,55:0,56:0,57:0,58:0,59:0,60:0,61:0,62:0,63:0,64:0,65:0,66:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,85:0,86:0,96:0,97:0,98:0,99:0,100:0,101:0,102:0,103:0,104:0,105:0,108:0},
+  163:{1:0,2:0,3:0,4:2,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,32:0,33:0,34:0,35:0,36:0,37:0,38:0,39:0,40:0,41:0,42:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,51:0,52:0,53:0,54:0,55:0,56:0,57:0,58:0,59:0,60:0,61:0,62:0,63:0,64:0,65:0,75:0,76:0,77:0,78:0,79:0,80:0,81:0,82:0,85:0,96:0,97:0,98:0,99:0,100:0,101:0,102:0,103:0,104:0,105:0,108:0},
+  164:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,43:0,44:0,45:0,46:0,47:0,48:0,50:0,75:0,76:0,81:0,97:0,98:0,99:0,100:0},
+  165:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,75:0,76:0,81:0,97:0,99:0},
+  166:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,47:0,48:0,49:0,50:0,75:0,76:0,81:0,97:0,98:0,99:0,100:0},
+  167:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,75:0,76:0,97:0,98:0,99:0,100:0},
+  168:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:1,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,75:0,76:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  169:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,75:0,76:0,81:0,82:0,97:0,98:0,99:0,100:0},
+  170:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,47:0,48:0,49:0,50:0,75:0,76:0,81:0,82:0,97:0,99:0},
+  171:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,45:0,46:0,48:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  172:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,45:0,48:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  173:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  174:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  175:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  176:{1:0,2:0,3:0,4:1,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,44:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  177:{1:0,2:0,3:0,4:1,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,44:0,45:0,46:0,47:0,48:0,50:0,81:0,97:0,98:0,99:0,100:0},
+  178:{1:0,2:0,3:0,4:1,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,43:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  179:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  180:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  181:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  182:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  183:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  184:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  185:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  186:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,11:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  187:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,11:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  188:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,11:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  189:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  190:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  191:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  192:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  193:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,14:0,15:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  194:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  195:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  196:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  197:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  198:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  199:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  200:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  201:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0},
+  202:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,47:0,49:0,98:0,100:0},
+  203:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,47:0,49:0,98:0,100:0},
+  204:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  205:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:1,17:1,18:1,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  206:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  207:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  208:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  209:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  210:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  211:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  212:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,48:0,50:0,98:0,100:0},
+  213:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  214:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,14:0,15:0,16:0,17:0,18:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  215:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,14:0,15:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  216:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  217:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  218:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  219:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  220:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,49:0,98:0,100:0},
+  221:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,49:0,98:0,100:0},
+  222:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,49:0,98:0,100:0},
+  223:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  224:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  225:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  226:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  227:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  228:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  229:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,49:0,98:0,100:0},
+  230:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,49:0,98:0,100:0},
+  231:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  232:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  233:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  234:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  235:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  236:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,43:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  237:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  238:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  239:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  240:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  241:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  242:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  243:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,49:0,98:0,100:0},
+  244:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,49:0,98:0,100:0},
+  245:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,47:0,49:0,98:0,100:0},
+  246:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,14:0,15:0,16:0,17:0,18:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  247:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,49:0,98:0,100:0},
+  248:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  249:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,14:0,15:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  250:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,49:0,98:0,100:0},
+  251:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,49:0,98:0,100:0},
+  252:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  253:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,49:0,98:0,100:0},
+  254:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,49:0,98:0,100:0},
+  255:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  256:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  257:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,14:0,15:0,47:0,49:0,98:0,100:0},
+  258:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,49:0,98:0,100:0},
+  259:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,14:0,15:0,47:0,49:0},
+  260:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  261:{1:0,2:0,3:0,4:0,5:0,6:1,7:0,8:0,9:0,10:0,11:0,13:0,14:0,15:0,47:0,49:0,98:0,100:0},
+  262:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,49:0,98:0,100:0},
+  263:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,14:0,15:0,47:0,49:0,98:0,100:0},
+  264:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,13:0,47:0,49:0,98:0,100:0},
+  265:{1:0,2:0,3:0,4:0,5:0,6:1,7:0,8:0,9:0,10:0,11:0,13:0,47:0,49:0,98:0,100:0},
+  266:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  267:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,47:0,49:0,98:0,100:0},
+  268:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,43:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  269:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  270:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  271:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  272:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  273:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  274:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  275:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  276:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  277:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  278:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  279:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  280:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  281:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  282:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  283:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  284:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  285:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  286:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  287:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,49:0,98:0,100:0},
+  288:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,47:0,49:0,98:0,100:0},
+  289:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,47:0,49:0,98:0,100:0},
+  290:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,47:0,49:0,98:0,100:0},
+  291:{1:0,2:0,3:0,4:1,5:0,6:0,7:0,8:0,9:0,10:0,47:0,49:0,98:0,100:0},
+  292:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  293:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  294:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  295:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,44:0,47:0,49:0,98:0,100:0},
+  296:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,44:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  297:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  298:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,44:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  299:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,44:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  300:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  301:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,44:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  302:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  303:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  304:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,47:0,48:0,49:0,50:0,97:0,99:0},
+  305:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  306:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,48:0,49:0,50:0,97:0,98:0,99:0,100:0},
+  307:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  308:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,49:0,98:0,100:0},
+  309:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  310:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  311:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,48:0,49:0,50:0,98:0,100:0},
+  312:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,98:0,100:0},
+  313:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  314:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,13:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  315:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  316:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,48:0,50:0,97:0,98:0,99:0,100:0},
+  317:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,49:0,98:0,100:0},
+  318:{1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,47:0,49:0,98:0,100:0}
+};
+var NA_STATE={
+  1:[48,50,97,98,99,100],
+  2:[48,50,97,98,99,100],
+  3:[47,48,49,50,97,98,99,100],
+  4:[47,48,49,50,97,98,99,100],
+  5:[48,50,97,98,99,100],
+  6:[48,50,97,98,99,100],
+  7:[48,50,97,98,99,100],
+  8:[47,48,49,50,97,98,99,100],
+  9:[47,48,49,50,97,98,99,100],
+  10:[48,50,97,98,99,100],
+  11:[48,50,97,98,99,100],
+  12:[48,50,97,98,99,100],
+  13:[48,50,97,98,99,100],
+  14:[47,48,49,50,97,99],
+  15:[47,48,49,50,97,98,99,100],
+  16:[47,48,49,50,97,98,99,100],
+  17:[47,48,49,50,97,99],
+  18:[48,50,97,98,99,100],
+  19:[48,50,97,98,99,100],
+  20:[48,50,97,98,99,100],
+  21:[48,50,97,98,99,100],
+  22:[47,48,49,50,97,99],
+  23:[47,48,49,50,97,98,99,100],
+  24:[47,48,49,50,97,98,99,100],
+  25:[47,48,49,50,97,99],
+  26:[48,50,97,98,99,100],
+  27:[48,50,97,98,99,100],
+  28:[47,49,98,100],
+  29:[47,49,98,100],
+  30:[47,48,49,50,97,99],
+  31:[47,48,49,50,97,98,99,100],
+  32:[47,48,49,50,97,98,99,100],
+  33:[47,48,49,50,98,100],
+  34:[47,49,98,100],
+  35:[47,49,98,100],
+  36:[47,48,49,50,98,100],
+  37:[47,48,49,50,97,98,99,100],
+  38:[47,48,49,50,97,98,99,100],
+  39:[47,48,49,50,97,98,99,100],
+  40:[47,48,49,50,98,100],
+  41:[47,48,49,50,98,100],
+  42:[47,49,98,100],
+  43:[47,49,98,100],
+  44:[47,48,49,50,98,100],
+  45:[47,48,49,50,98,100],
+  46:[47,48,49,50,97,98,99,100],
+  47:[47,48,49,50,97,98,99,100],
+  48:[47,48,49,50,97,98,99,100],
+  49:[47,48,49,50,97,99],
+  50:[48,50,97,98,99,100],
+  51:[48,50,97,98,99,100],
+  52:[48,50,97,98,99,100],
+  53:[48,50,97,98,99,100],
+  54:[47,48,49,50,97,99],
+  55:[47,48,49,50,97,98,99,100],
+  56:[47,48,49,50,97,98,99,100],
+  57:[47,48,49,50,97,99],
+  58:[47,49,98,100],
+  59:[47,49,98,100],
+  60:[47,48,49,50,98,100],
+  61:[47,48,49,50,98,100],
+  62:[48,50,97,98,99,100],
+  63:[47,49,98,100],
+  64:[48,50,97,98,99,100],
+  65:[48,50,97,98,99,100],
+  66:[47,48,49,50,98,100],
+  67:[47,48,49,50,98,100],
+  68:[48,50,97,98,99,100],
+  69:[48,50,97,98,99,100],
+  70:[47,49,98,100],
+  71:[48,50,97,98,99,100],
+  72:[47,48,49,50,97,98,99,100],
+  73:[47,48,49,50,98,100],
+  74:[47,48,49,50,97,98,99,100],
+  75:[47,48,49,50,97,98,99,100],
+  76:[48,50,97,98,99,100],
+  77:[48,50,97,98,99,100],
+  78:[48,50,97,98,99,100],
+  79:[48,50,97,98,99,100],
+  80:[47,48,49,50,97,98,99,100],
+  81:[47,48,49,50,97,98,99,100],
+  82:[47,48,49,50,98,100],
+  83:[47,48,49,50,97,98,99,100],
+  84:[48,50,97,98,99,100],
+  85:[48,50,97,98,99,100],
+  86:[47,48,49,50,97,98,99,100],
+  87:[47,48,49,50,97,98,99,100],
+  88:[47,49,98,100],
+  89:[47,49,98,100],
+  90:[47,48,49,50,98,100],
+  91:[47,48,49,50,98,100],
+  92:[47,48,49,50,98,100],
+  93:[47,48,49,50,98,100],
+  94:[47,48,49,50,98,100],
+  95:[47,48,49,50,97,98,99,100],
+  96:[48,50,97,98,99,100],
+  97:[48,50,97,98,99,100],
+  98:[48,50,97,98,99,100],
+  99:[48,50,97,98,99,100],
+  100:[47,48,49,50,97,99],
+  101:[47,48,49,50,97,98,99,100],
+  102:[47,48,49,50,97,98,99,100],
+  103:[47,48,49,50,97,98,99,100],
+  104:[47,48,49,50,97,98,99,100],
+  105:[47,48,49,50,97,99],
+  106:[48,50,97,98,99,100],
+  107:[48,50,97,98,99,100],
+  108:[48,50,97,98,99,100],
+  109:[48,50,97,98,99,100],
+  110:[47,48,49,50,97,99],
+  111:[47,48,49,50,97,98,99,100],
+  112:[47,48,49,50,97,98,99,100],
+  113:[47,48,49,50,97,98,99,100],
+  114:[47,48,49,50,97,98,99,100],
+  115:[47,48,49,50,97,99],
+  116:[48,50,97,98,99,100],
+  117:[48,50,97,98,99,100],
+  118:[47,49,98,100],
+  119:[47,48,49,50,98,100],
+  120:[47,48,49,50,98,100],
+  121:[47,48,49,50,97,98,99,100],
+  122:[47,48,49,50,97,98,99,100],
+  123:[48,50,97,98,99,100],
+  124:[48,50,97,98,99,100],
+  125:[48,50,97,98,99,100],
+  126:[48,50,97,98,99,100],
+  127:[47,48,49,50,97,98,99,100],
+  128:[47,48,49,50,97,98,99,100],
+  129:[47,49,98,100],
+  130:[47,49,97,98,99,100],
+  131:[47,49,98,100],
+  132:[48,50,97,98,99,100],
+  133:[48,50,97,98,99,100],
+  134:[47,48,49,50,97,98,99,100],
+  135:[47,48,49,50,97,98,99,100],
+  136:[48,50,97,98,99,100],
+  137:[48,50,97,98,99,100],
+  138:[48,50,97,98,99,100],
+  139:[48,50,97,98,99,100],
+  140:[47,48,49,50,97,98,99,100],
+  141:[47,48,49,50,97,98,99,100],
+  142:[48,50,97,98,99,100],
+  143:[48,50,97,98,99,100],
+  144:[48,50,97,98,99,100],
+  145:[48,50,97,98,99,100],
+  146:[47,49,98,100],
+  147:[48,50,97,98,99,100],
+  148:[48,50,97,98,99,100],
+  149:[47,48,49,50,97,99],
+  150:[47,48,49,50,97,98,99,100],
+  151:[47,48,49,50,97,98,99,100],
+  152:[47,48,49,50,97,99],
+  153:[48,50,97,98,99,100],
+  154:[48,50,97,98,99,100],
+  155:[47,48,49,50,97,99],
+  156:[47,48,49,50,97,98,99,100],
+  157:[47,48,49,50,97,98,99,100],
+  158:[47,48,49,50,97,98,99,100],
+  159:[47,48,49,50,97,98,99,100],
+  160:[47,48,49,50,97,99],
+  161:[48,50,97,98,99,100],
+  162:[47,49,98,100],
+  163:[47,48,49,50,98,100],
+  164:[48,50,97,98,99,100],
+  165:[47,48,49,50,97,99],
+  166:[47,48,49,50,97,98,99,100],
+  167:[47,48,49,50,97,98,99,100],
+  168:[47,48,49,50,97,98,99,100],
+  169:[47,48,49,50,97,98,99,100],
+  170:[47,48,49,50,97,99],
+  171:[48,50,97,98,99,100],
+  172:[48,50,97,98,99,100],
+  173:[47,48,49,50,97,99],
+  174:[47,48,49,50,97,98,99,100],
+  175:[47,48,49,50,97,98,99,100],
+  176:[47,48,49,50,97,99],
+  177:[48,50,97,98,99,100],
+  178:[48,50,97,98,99,100],
+  179:[47,48,49,50,98,100],
+  180:[48,50,97,98,99,100],
+  181:[48,50,97,98,99,100],
+  182:[48,50,97,98,99,100],
+  183:[47,48,49,50,98,100],
+  184:[47,48,49,50,98,100],
+  185:[47,48,49,50,98,100],
+  186:[47,48,49,50,97,98,99,100],
+  187:[47,48,49,50,97,98,99,100],
+  188:[47,48,49,50,97,98,99,100],
+  189:[47,48,49,50,97,99],
+  190:[48,50,97,98,99,100],
+  191:[48,50,97,98,99,100],
+  192:[48,50,97,98,99,100],
+  193:[48,50,97,98,99,100],
+  194:[47,48,49,50,97,99],
+  195:[47,48,49,50,97,98,99,100],
+  196:[47,48,49,50,97,98,99,100],
+  197:[47,48,49,50,97,98,99,100],
+  198:[47,48,49,50,97,98,99,100],
+  199:[47,48,49,50,97,98,99,100],
+  200:[47,48,49,50,97,98,99,100],
+  201:[47,48,49,50],
+  202:[47,49,98,100],
+  203:[47,49,98,100],
+  204:[47,48,49,50,98,100],
+  205:[47,48,49,50,97,98,99,100],
+  206:[47,48,49,50,97,98,99,100],
+  207:[47,48,49,50,97,98,99,100],
+  208:[47,48,49,50,97,98,99,100],
+  209:[47,48,49,50,97,98,99,100],
+  210:[47,48,49,50,97,98,99,100],
+  211:[47,48,49,50,97,99],
+  212:[48,50,98,100],
+  213:[48,50,97,98,99,100],
+  214:[48,50,97,98,99,100],
+  215:[48,50,97,98,99,100],
+  216:[47,48,49,50,97,99],
+  217:[47,48,49,50,97,98,99,100],
+  218:[47,48,49,50,97,98,99,100],
+  219:[47,48,49,50,97,98,99,100],
+  220:[47,49,98,100],
+  221:[47,49,98,100],
+  222:[47,49,98,100],
+  223:[47,48,49,50,97,98,99,100],
+  224:[47,48,49,50,97,98,99,100],
+  225:[47,48,49,50,97,98,99,100],
+  226:[47,48,49,50,97,98,99,100],
+  227:[47,48,49,50,97,98,99,100],
+  228:[47,48,49,50,97,98,99,100],
+  229:[47,49,98,100],
+  230:[47,49,98,100],
+  231:[48,50,97,98,99,100],
+  232:[47,48,49,50,98,100],
+  233:[47,48,49,50,98,100],
+  234:[47,48,49,50,98,100],
+  235:[47,48,49,50,98,100],
+  236:[47,48,49,50,97,99],
+  237:[48,50,97,98,99,100],
+  238:[48,50,97,98,99,100],
+  239:[48,50,97,98,99,100],
+  240:[48,50,97,98,99,100],
+  241:[47,48,49,50,97,99],
+  242:[47,48,49,50,97,99],
+  243:[47,49,98,100],
+  244:[47,49,98,100],
+  245:[47,49,98,100],
+  246:[48,50,97,98,99,100],
+  247:[47,49,98,100],
+  248:[47,48,49,50,98,100],
+  249:[47,48,49,50,98,100],
+  250:[47,49,98,100],
+  251:[47,49,98,100],
+  252:[47,48,49,50,98,100],
+  253:[47,49,98,100],
+  254:[47,49,98,100],
+  255:[47,48,49,50,98,100],
+  256:[47,48,49,50,98,100],
+  257:[47,49,98,100],
+  258:[47,49,98,100],
+  259:[47,49],
+  260:[47,48,49,50,98,100],
+  261:[47,49,98,100],
+  262:[47,49,98,100],
+  263:[47,49,98,100],
+  264:[47,49,98,100],
+  265:[47,49,98,100],
+  266:[48,50,97,98,99,100],
+  267:[47,49,98,100],
+  268:[47,48,49,50,98,100],
+  269:[47,48,49,50,98,100],
+  270:[47,48,49,50,98,100],
+  271:[47,48,49,50,98,100],
+  272:[47,48,49,50,98,100],
+  273:[48,50,97,98,99,100],
+  274:[48,50,97,98,99,100],
+  275:[47,48,49,50,97,99],
+  276:[47,48,49,50,97,99],
+  277:[48,50,97,98,99,100],
+  278:[48,50,97,98,99,100],
+  279:[48,50,97,98,99,100],
+  280:[48,50,97,98,99,100],
+  281:[47,48,49,50,97,99],
+  282:[47,48,49,50,97,99],
+  283:[48,50,97,98,99,100],
+  284:[48,50,97,98,99,100],
+  285:[47,48,49,50,97,98,99,100],
+  286:[47,48,49,50,98,100],
+  287:[47,49,98,100],
+  288:[47,49,98,100],
+  289:[47,49,98,100],
+  290:[47,49,98,100],
+  291:[47,49,98,100],
+  292:[47,48,49,50,98,100],
+  293:[47,48,49,50,98,100],
+  294:[48,50,97,98,99,100],
+  295:[47,49,98,100],
+  296:[47,48,49,50,97,99],
+  297:[47,48,49,50,97,98,99,100],
+  298:[47,48,49,50,97,98,99,100],
+  299:[47,48,49,50,97,99],
+  300:[48,50,97,98,99,100],
+  301:[48,50,97,98,99,100],
+  302:[48,50,97,98,99,100],
+  303:[48,50,97,98,99,100],
+  304:[47,48,49,50,97,99],
+  305:[47,48,49,50,97,98,99,100],
+  306:[47,48,49,50,97,98,99,100],
+  307:[47,48,49,50,98,100],
+  308:[47,49,98,100],
+  309:[48,50,97,98,99,100],
+  310:[48,50,97,98,99,100],
+  311:[47,48,49,50,98,100],
+  312:[98,100],
+  313:[48,50,97,98,99,100],
+  314:[48,50,97,98,99,100],
+  315:[48,50,97,98,99,100],
+  316:[48,50,97,98,99,100],
+  317:[47,49,98,100],
+  318:[47,49,98,100]
+};
+
+// ── REVISION HELPERS ──
+function getRevForVillaITP(villa, itp) {
+  // Check VILLA_STATE (register baseline)
+  var base = (VILLA_STATE[villa] && VILLA_STATE[villa][itp] !== undefined) ? VILLA_STATE[villa][itp] : -1;
+  // Check live submissions from sheet
+  var liveRev = -1;
+  submissions.forEach(function(s) {
+    if (s.itpNum === itp && s.villas.includes(villa) && s.rev !== undefined) {
+      if (s.rev > liveRev) liveRev = s.rev;
+    }
+  });
+  return Math.max(base, liveRev);
+}
+
+function isSubmittedForVillaITP(villa, itp) {
+  if (isNA(itp, villa)) return true;
+  if (VILLA_STATE[villa] && VILLA_STATE[villa][itp] !== undefined) return true;
+  return submissions.some(function(s){ return s.itpNum===itp && s.villas.includes(villa); });
+}
+
+function getNextRevision(villa, itp) {
+  var cur = getRevForVillaITP(villa, itp);
+  return cur + 1;
+}
+
+// ── SUGGESTION ENGINE ──
+// PREREQ map reversed: itp -> list of ITPs that require it
+var NEXT_ITP = {};
+(function(){
+  Object.keys(PREREQ).forEach(function(itp){
+    var ps = PREREQ[itp];
+    if(ps==='NA') return;
+    ps.split('&').forEach(function(p){
+      var n=parseInt(p.trim());
+      if(!isNaN(n)){
+        if(!NEXT_ITP[n]) NEXT_ITP[n]=[];
+        NEXT_ITP[n].push(parseInt(itp));
+      }
+    });
+  });
+})();
+
+function getSuggestionsForVillas(villaList) {
+  // For each villa, find what ITPs can be submitted next
+  var suggestions = {}; // itp -> [villas]
+  villaList.forEach(function(villa){
+    var done = VILLA_STATE[villa] ? Object.keys(VILLA_STATE[villa]).map(Number) : [];
+    // Also add from live submissions
+    submissions.forEach(function(s){
+      if(s.villas.includes(villa) && done.indexOf(s.itpNum)===-1) done.push(s.itpNum);
+    });
+    
+    // For each done ITP, check what's next
+    done.forEach(function(itp){
+      var nexts = NEXT_ITP[itp] || [];
+      nexts.forEach(function(nextItp){
+        // Check if already done
+        if(done.indexOf(nextItp)!==-1) return;
+        // Check if ALL prerequisites of nextItp are done
+        var ps = PREREQ[nextItp] || 'NA';
+        if(ps==='NA'){ 
+          if(!suggestions[nextItp]) suggestions[nextItp]=[];
+          if(suggestions[nextItp].indexOf(villa)===-1) suggestions[nextItp].push(villa);
+          return;
+        }
+        var prereqNums = ps.split('&').map(function(p){return parseInt(p.trim());}).filter(function(n){return !isNaN(n);});
+        var allMet = prereqNums.every(function(pn){ return done.indexOf(pn)!==-1; });
+        if(allMet){
+          if(!suggestions[nextItp]) suggestions[nextItp]=[];
+          if(suggestions[nextItp].indexOf(villa)===-1) suggestions[nextItp].push(villa);
+        }
+      });
+    });
+    
+    // Also check ITPs with NA prerequisite not yet done
+    [1,2,3].forEach(function(itp){
+      if(done.indexOf(itp)===-1){
+        if(!suggestions[itp]) suggestions[itp]=[];
+        if(suggestions[itp].indexOf(villa)===-1) suggestions[itp].push(villa);
+      }
+    });
+  });
+  return suggestions;
+}
+
+// ── INIT ──
+showLoading("Loading data...");
+loadFromSheet();
+setInterval(loadFromSheet, 30000);
+</script>
+
+<!-- SUGGESTION PAGE -->
+<div class="page" id="page-suggest">
+<div class="main">
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:20px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Enter your villas to get today's suggestions</div>
+    <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+      <select class="eng-select" id="suggestEng" style="min-width:180px;">
+        <option value="">— Select Engineer —</option>
+        <option>Ali Mirza</option>
+        <option>Hussain Mansoor</option>
+        <option>Ali Ghazwan</option>
+        <option>Sayed Ali</option>
+      </select>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1;">
+        <div style="display:flex;gap:6px;align-items:center;flex:1;min-width:200px;">
+          <span style="font-size:11px;color:var(--muted);white-space:nowrap;">By Villas:</span>
+          <textarea id="suggestVillas" style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;color:#1e293b;padding:8px 12px;border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:13px;height:38px;resize:none;" placeholder="e.g: 1, 5, 12, 30"></textarea>
+          <button class="btn btn-primary" style="padding:9px 16px;white-space:nowrap;" onclick="runSuggestions()">Go →</button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span style="font-size:11px;color:var(--muted);white-space:nowrap;">By Engineer:</span>
+          <button class="btn btn-outline" style="padding:9px 14px;font-size:12px;" onclick="runEngineerSuggestions()">Load My Zone →</button>
+        </div>
+      </div>
+      <button class="btn btn-outline" style="padding:9px 16px;" onclick="exportSuggestions()">⬇ Export Excel</button>
+    </div>
+  </div>
+  <div id="suggestResults"></div>
+</div>
+</div>
+
+<script>
+
+function exportSuggestions(){
+  var raw=document.getElementById('suggestVillas').value;
+  var eng=document.getElementById('suggestEng').value||'Engineer';
+  var arr=[];
+  raw.split(/[,\s]+/).forEach(function(s){var n=Number(s.trim());if(!isNaN(n)&&n>=1&&n<=318)arr.push(n);});
+  arr=arr.filter(function(v,i){return arr.indexOf(v)===i;}).sort(function(a,b){return a-b;});
+  if(!arr.length){toast('Enter villa numbers first','warning');return;}
+  var sugg=getSuggestionsForVillas(arr);
+  var pOrder={'CRITICAL':0,'MEDIUM':1,'LOW':2};
+  var keys=Object.keys(sugg).map(Number).sort(function(a,b){
+    var pa=ITP_PRIORITY[a]||'LOW', pb=ITP_PRIORITY[b]||'LOW';
+    return pOrder[pa]!==pOrder[pb]?pOrder[pa]-pOrder[pb]:a-b;
+  });
+  if(!keys.length){toast('No suggestions to export','warning');return;}
+
+  // Color map per priority
+  var priColor={'CRITICAL':'#FFCCCC','MEDIUM':'#FFF3CC','LOW':'#CCFFCC'};
+  var priLabel={'CRITICAL':'🔴 Critical','MEDIUM':'🟡 Medium','LOW':'🟢 Standard'};
+
+  // Build HTML table styled for copy-paste into Excel
+  var date=new Date().toLocaleDateString('en-GB');
+  var html2='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
+  html2+='<head><meta charset="UTF-8"><style>';
+  html2+='body{font-family:Arial,sans-serif;font-size:10pt;}';
+  html2+='table{border-collapse:collapse;}';
+  html2+='td,th{border:1px solid #999;padding:4px 8px;white-space:nowrap;text-align:center;}';
+  html2+='.h-itp{background:#1e3a5f;color:#fff;font-weight:bold;text-align:left;min-width:200px;}';
+  html2+='.h-villa{background:#1e3a5f;color:#fff;font-weight:bold;min-width:40px;}';
+  html2+='.h-info{background:#2d5f8a;color:#fff;font-weight:bold;}';
+  html2+='.c-critical{background:#FFCCCC;color:#7f0000;}';
+  html2+='.c-medium{background:#FFF3CC;color:#7f5f00;}';
+  html2+='.c-low{background:#CCFFCC;color:#0a5c0a;}';
+  html2+='.c-done{background:#e8e8e8;color:#999;font-size:8pt;}';
+  html2+='.c-empty{background:#fff;}';
+  html2+='</style></head><body>';
+  html2+='<table>';
+
+  // Title row
+  html2+='<tr><td colspan="'+(5+arr.length)+'" style="background:#0c2340;color:#fff;font-size:12pt;font-weight:bold;text-align:left;">IR Suggestion Report — '+eng+' — '+date+'</td></tr>';
+
+  // Legend
+  html2+='<tr><td colspan="'+(5+arr.length)+'" style="background:#f8f8f8;text-align:left;font-size:9pt;">🔴 Critical = opens many next steps &nbsp;&nbsp; 🟡 Medium = moderate chain &nbsp;&nbsp; 🟢 Standard = limited chain &nbsp;&nbsp; ✓ = already submitted &nbsp;&nbsp; empty = not in your zone</td></tr>';
+
+  // Header row
+  html2+='<tr>';
+  html2+='<th class="h-info">Priority</th>';
+  html2+='<th class="h-info">ITP</th>';
+  html2+='<th class="h-info">Cat.</th>';
+  html2+='<th class="h-itp" style="text-align:left;">ITP Name</th>';
+  html2+='<th class="h-info">Count</th>';
+  arr.forEach(function(v){ html2+='<th class="h-villa">'+v+'</th>'; });
+  html2+='</tr>';
+
+  // Data rows
+  var lastPri='';
+  keys.forEach(function(itp){
+    var d=ITP_DATA.find(function(x){return x[0]===itp;})||[itp,'C','ITP '+itp,''];
+    var pri=ITP_PRIORITY[itp]||'LOW';
+    var cls='c-'+pri.toLowerCase();
+    var villaCount=sugg[itp]?sugg[itp].length:0;
+
+    // Add separator row when priority group changes
+    if(pri!==lastPri){
+      lastPri=pri;
+      html2+='<tr><td colspan="'+(5+arr.length)+'" style="background:'+priColor[pri]+';font-weight:bold;text-align:left;font-size:10pt;">'+priLabel[pri]+'</td></tr>';
+    }
+
+    html2+='<tr>';
+    html2+='<td class="'+cls+'" style="font-weight:bold;">'+priLabel[pri]+'</td>';
+    html2+='<td class="'+cls+'" style="font-weight:bold;">ITP '+itp+'</td>';
+    html2+='<td class="'+cls+'">'+d[1]+'</td>';
+    html2+='<td class="'+cls+'" style="text-align:left;">'+d[2]+'</td>';
+    html2+='<td class="'+cls+'" style="font-weight:bold;">'+villaCount+'</td>';
+
+    arr.forEach(function(v){
+      var inSugg=sugg[itp]&&sugg[itp].indexOf(v)!==-1;
+      var isDone=isSubmittedForVillaITP(v,itp);
+      if(inSugg){
+        var rev=getNextRevision(v,itp);
+        html2+='<td class="'+cls+'" style="font-weight:bold;">R'+rev+'</td>';
+      } else if(isDone){
+        html2+='<td class="c-done">✓</td>';
+      } else {
+        html2+='<td class="c-empty"></td>';
+      }
+    });
+    html2+='</tr>';
+  });
+
+  html2+='</table></body></html>';
+
+  var blob=new Blob([html2],{type:'application/vnd.ms-excel;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='Suggestions_'+eng.replace(/ /g,'_')+'_'+new Date().toISOString().slice(0,10)+'.xls';
+  a.click();
+  toast('Exported '+keys.length+' ITPs × '+arr.length+' villas','success');
+}
+
+
+function runEngineerSuggestions(){
+  var eng = document.getElementById('suggestEng').value;
+  if(!eng){ toast('Select your name first','warning'); return; }
+  var zone = ENGINEER_ZONES[eng];
+  if(!zone||!zone.length){ toast('No villa zone defined for this engineer','warning'); return; }
+  // Fill villa textarea and run
+  document.getElementById('suggestVillas').value = zone.join(', ');
+  runSuggestions();
+}
+
+function runSuggestions(){
+  var raw=document.getElementById('suggestVillas').value;
+  var eng=document.getElementById('suggestEng').value;
+  var arr=[];
+  raw.split(/[,\s]+/).forEach(function(s){var n=Number(s.trim());if(!isNaN(n)&&n>=1&&n<=318) arr.push(n);});
+  arr=arr.filter(function(v,i){return arr.indexOf(v)===i;});
+  if(!arr.length){toast('Enter villa numbers first','warning');return;}
+  var sugg=getSuggestionsForVillas(arr);
+  var res=document.getElementById('suggestResults');
+  var keys=Object.keys(sugg).map(Number);
+  if(!keys.length){res.innerHTML='<div style="text-align:center;padding:40px;color:#64748b">All ITPs are up to date for these villas ✓</div>';return;}
+
+  // Sort by priority
+  var pOrder={'CRITICAL':0,'MEDIUM':1,'LOW':2};
+  keys.sort(function(a,b){
+    var pa=ITP_PRIORITY[a]||'LOW', pb=ITP_PRIORITY[b]||'LOW';
+    return pOrder[pa]!==pOrder[pb]?pOrder[pa]-pOrder[pb]:a-b;
+  });
+
+  var critical=keys.filter(function(k){return (ITP_PRIORITY[k]||'LOW')==='CRITICAL';});
+  var medium=keys.filter(function(k){return (ITP_PRIORITY[k]||'LOW')==='MEDIUM';});
+  var low=keys.filter(function(k){return (ITP_PRIORITY[k]||'LOW')==='LOW';});
+
+  function renderCard(itp){
+    var villas=sugg[itp].sort(function(a,b){return a-b;});
+    var d=ITP_DATA.find(function(x){return x[0]===itp;})||[itp,'C','ITP '+itp,''];
+    var revInfo=villas.map(function(v){return '<span style="font-size:10px;font-family:monospace;background:#f1f5f9;border:1px solid #e2e8f0;padding:1px 5px;border-radius:3px;margin:1px;">V'+v+' R'+getNextRevision(v,itp)+'</span>';}).join(' ');
+    var pri=ITP_PRIORITY[itp]||'LOW';
+    var borderCol=pri==='CRITICAL'?'#fca5a5':pri==='MEDIUM'?'#fcd34d':'#d1fae5';
+    return '<div style="background:#fff;border:2px solid '+borderCol+';border-radius:10px;padding:14px 16px;margin-bottom:8px;">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'+
+        '<span style="font-family:monospace;font-size:12px;font-weight:600;background:#0ea5e9;color:#fff;padding:3px 8px;border-radius:5px;">ITP '+itp+'</span>'+
+        '<span class="cat-badge cat-'+d[1]+'">'+d[1]+'</span>'+
+        '<span style="font-size:13px;font-weight:500;flex:1;">'+d[2]+'</span>'+
+        '<button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="addSuggestionToQueue('+itp+',['+villas.join(',')+'])">+ Add to Queue</button>'+
+      '</div>'+
+      '<div style="font-size:11px;color:#64748b;margin-bottom:6px;">'+d[3]+'</div>'+
+      '<div>'+revInfo+'</div>'+
+    '</div>';
+  }
+
+  function renderGroup(title,color,bg,list){
+    if(!list.length) return '';
+    return '<div style="font-size:12px;font-weight:700;color:'+color+';background:'+bg+';border-radius:8px;padding:8px 14px;margin:14px 0 8px;">'+title+' ('+list.length+')</div>'+list.map(renderCard).join('');
+  }
+
+  var html2='<div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:14px;">'+(eng?eng+' — ':'')+arr.length+' Villas — '+keys.length+' ITPs ready</div>';
+  html2+=renderGroup('🔴 Critical — Opens Many Next Steps','#dc2626','#fef2f2',critical);
+  html2+=renderGroup('🟡 Medium Importance','#d97706','#fffbeb',medium);
+  html2+=renderGroup('🟢 Standard','#16a34a','#f0fdf4',low);
+res.innerHTML=html2;
+}
+
+function addSuggestionToQueue(itp, villas){
+  showPage('submit');
+  if(!queue.find(function(q){return q.itpNum===itp;})){
+    queue.push({itpNum:itp, villas:villas, _raw:villas.join(', ')});
+  }
+  renderQueue();
+  toast('ITP '+itp+' added to queue','success');
+}
+</script>
+</body>
+</html>
