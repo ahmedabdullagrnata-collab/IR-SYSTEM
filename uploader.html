@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESHP · IR Register Uploader</title>
+<style>
+  :root{--bg:#0f172a;--card:#111c33;--line:#25324d;--txt:#e6edf7;--mut:#8ea0bf;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--acc:#38bdf8}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:24px 14px}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 2px}
+  .sub{color:var(--mut);margin:0 0 18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+  .card h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
+  label{display:block;font-size:13px;color:var(--mut);margin-bottom:4px}
+  input[type=password]{width:100%;background:#0b1326;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:10px 12px;font-size:15px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .chk{display:flex;gap:7px;align-items:center;font-size:13px;color:var(--mut);margin-top:8px}
+  #drop{border:2px dashed var(--line);border-radius:12px;padding:30px 14px;text-align:center;color:var(--mut);cursor:pointer;transition:.15s}
+  #drop.over,#drop:hover{border-color:var(--acc);color:var(--txt)}
+  #drop b{color:var(--txt)}
+  #file{display:none}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td{padding:6px 4px;border-bottom:1px solid var(--line)}
+  td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .delta{color:var(--ok);font-weight:600;font-size:12px;margin-left:6px}
+  button{background:var(--acc);color:#04202e;border:0;border-radius:10px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .msg{border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px}
+  .msg.ok{background:#052e1a;border:1px solid #14532d;color:#86efac}
+  .msg.warn{background:#2f2105;border:1px solid #78510f;color:#fcd34d}
+  .msg.err{background:#2d0b0b;border:1px solid #7f1d1d;color:#fca5a5}
+  .msg.info{background:#0b2233;border:1px solid #17445f;color:#7dd3fc}
+  details{margin-top:8px;color:var(--mut);font-size:13px}
+  summary{cursor:pointer}
+  code{background:#0b1326;padding:1px 5px;border-radius:5px;font-size:12px}
+  a{color:var(--acc)}
+  .ar{direction:rtl;text-align:right}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ESHP · IR Register Uploader</h1>
+  <p class="sub">Upload the latest <code>REGISTER.xlsm</code> — the dashboard reads the database, so no code changes are needed.<br>
+  <span class="ar" dir="rtl">ارفع ملف الرجستر الجديد وسيتحدّث الداشبورد تلقائياً، بدون تعديل أي كود.</span></p>
+
+  <div class="card">
+    <h2>Database now</h2>
+    <div id="dbstatus" class="msg info">Checking database…</div>
+  </div>
+
+  <div class="card">
+    <h2>1 · Passcode</h2>
+    <label for="pass">Upload passcode (only you should have it)</label>
+    <input type="password" id="pass" autocomplete="off" placeholder="ESHP-xxxxxxxxxx">
+    <label class="chk"><input type="checkbox" id="remember"> Remember on this device</label>
+  </div>
+
+  <div class="card">
+    <h2>2 · Register file</h2>
+    <div id="drop"><b>Drop REGISTER.xlsm here</b><br>or click to choose a file<input type="file" id="file" accept=".xlsm,.xlsx,.xls"></div>
+    <div id="summary"></div>
+  </div>
+
+  <div class="card">
+    <h2>3 · Publish</h2>
+    <div class="row"><button id="btn" disabled>Upload to database</button><span id="hint" style="color:var(--mut);font-size:13px">Choose a file first.</span></div>
+    <div id="result"></div>
+  </div>
+
+  <p style="color:var(--mut);font-size:12px">Everything is rebuilt from the whole register each time (all rows, all disciplines), so late or back-dated entries are never missed. The previous data is replaced in a single all-or-nothing step.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ESHP IR register -> database payload.
+ * Pure function: takes the rows of the "IR" sheet (array of arrays, header:1)
+ * and returns { villa_state, itp_stats, daily, crit, meta, report }.
+ * Rules (same as the daily manual process):
+ *  - A row is valid when column B (IR code) is filled. (Column A / S-N is NOT used: backdated rows have it blank.)
+ *  - Villa column may be: 12 | "12 to 20" | "12-20" | "6,7,8"  -> expanded to individual villas.
+ *  - ITP must be numeric (rows with GEN / blank ITP are skipped and reported).
+ *  - Status CAN (cancelled) and N (not applicable) are ignored.
+ *  - Blank status is treated as S (submitted, pending).
+ *  - Rejected count = rows with status C (revise & resubmit) or D (rejected).
+ *  - villa_state = highest revision per (villa, itp).
+ */
+(function (root) {
+  var CRITICAL_ITPS = [2, 3, 4, 7, 8, 9, 10, 13, 15, 18, 20, 21, 22, 23, 24, 26, 29, 31];
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function expandVillas(raw) {
+    if (raw === null || raw === undefined) return null;
+    var s = String(raw).trim();
+    if (s === '') return null;
+    var m;
+    if (/^\d+$/.test(s)) return [parseInt(s, 10)];
+    m = s.match(/^(\d+)\s*to\s*(\d+)$/i) || s.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (m) {
+      var a = parseInt(m[1], 10), b = parseInt(m[2], 10), out = [];
+      if (a > b) { var t = a; a = b; b = t; }
+      for (var i = a; i <= b; i++) out.push(i);
+      return out;
+    }
+    var parts = s.split(/[,\s]+/).filter(function (p) { return p !== ''; });
+    if (parts.length && parts.every(function (p) { return /^\d+$/.test(p); })) {
+      return parts.map(function (p) { return parseInt(p, 10); });
+    }
+    return null;
+  }
+
+  function toISODate(v) {
+    if (v === null || v === undefined || v === '') return null;
+    if (v instanceof Date) {
+      return new Date(Date.UTC(v.getFullYear(), v.getMonth(), v.getDate())).toISOString().slice(0, 10);
+    }
+    if (typeof v === 'number') {
+      return new Date(Math.round((v - 25569) * 86400 * 1000)).toISOString().slice(0, 10);
+    }
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return null;
+    return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString().slice(0, 10);
+  }
+
+  function prettyDate(iso) {
+    var p = iso.split('-');
+    return p[2] + ' ' + MONTHS[parseInt(p[1], 10) - 1] + ' ' + p[0];
+  }
+
+  function buildPayload(rows) {
+    var villa = {};          // villa -> { itp: maxRev }
+    var itpStats = {};       // itp -> {sub, rej}
+    var daily = {};          // date -> {s,c,cp}
+    var crit = [];           // [date, villa, itp, rev, status, discipline]
+    var report = { totalRows: 0, validRows: 0, expandedEntries: 0, skipped: [], cancelled: 0, rangeRows: 0 };
+    var maxDate = null;
+
+    for (var r = 5; r < rows.length; r++) {   // data starts at sheet row 6
+      var row = rows[r];
+      if (!row) continue;
+      var code = row[1];
+      if (code === null || code === undefined || String(code).trim() === '' || String(code).trim() === '.') continue;
+      report.totalRows++;
+
+      var villaRaw = row[2], itpRaw = row[3], revRaw = row[4];
+      var status = row[9], dateRaw = row[10], section = row[13];
+      status = (status === null || status === undefined || String(status).trim() === '') ? 'S' : String(status).trim().toUpperCase();
+
+      if (status === 'CAN') { report.cancelled++; continue; }
+      if (status === 'N') continue;
+
+      var itp = (typeof itpRaw === 'number') ? itpRaw : (/^\d+$/.test(String(itpRaw).trim()) ? parseInt(String(itpRaw).trim(), 10) : NaN);
+      var rev = (typeof revRaw === 'number') ? revRaw : (/^\d+$/.test(String(revRaw).trim()) ? parseInt(String(revRaw).trim(), 10) : NaN);
+      var villas = expandVillas(villaRaw);
+
+      if (!isFinite(itp) || !isFinite(rev) || !villas) {
+        report.skipped.push({ row: r + 1, code: String(code), villa: villaRaw, itp: itpRaw });
+        continue;
+      }
+      report.validRows++;
+      if (villas.length > 1) report.rangeRows++;
+
+      var iso = toISODate(dateRaw);
+      if (iso && (!maxDate || iso > maxDate)) maxDate = iso;
+      var isCrit = CRITICAL_ITPS.indexOf(itp) !== -1;
+      var disc = (section === null || section === undefined || String(section).trim() === '') ? 'Civil' : String(section).trim();
+
+      for (var k = 0; k < villas.length; k++) {
+        var v = villas[k];
+        if (v < 1 || v > 318) { report.skipped.push({ row: r + 1, code: String(code), villa: v, itp: itp, reason: 'villa out of range' }); continue; }
+        report.expandedEntries++;
+
+        var vs = villa[v] || (villa[v] = {});
+        if (vs[itp] === undefined || rev > vs[itp]) vs[itp] = rev;
+
+        var is = itpStats[itp] || (itpStats[itp] = { sub: 0, rej: 0 });
+        is.sub++;
+        if (status === 'D' || status === 'C') is.rej++;
+
+        if (iso) {
+          var d = daily[iso] || (daily[iso] = { s: 0, c: 0, cp: 0 });
+          d.s++;
+          if (isCrit) {
+            d.c++;
+            if (status === 'S') { d.cp++; crit.push([iso, v, itp, rev, 'S', disc]); }
+          }
+        }
+      }
+    }
+
+    var pairs = 0;
+    Object.keys(villa).forEach(function (v) { pairs += Object.keys(villa[v]).length; });
+    crit.sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : (a[1] - b[1]) || (a[2] - b[2]); });
+
+    return {
+      villa_state: villa,
+      itp_stats: itpStats,
+      daily: daily,
+      crit: crit,
+      meta: {
+        register_update_date: maxDate ? prettyDate(maxDate) : '',
+        register_pairs: String(pairs)
+      },
+      report: report
+    };
+  }
+
+  var api = { buildPayload: buildPayload, expandVillas: expandVillas, CRITICAL_ITPS: CRITICAL_ITPS };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.IRCore = api;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+(function(){
+  var DB_URL='https://jvhedhcdmahxwvjrnrop.supabase.co';
+  var DB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2aGVkaGNkbWFoeHd2anJucm9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0NzMxMDMsImV4cCI6MjEwNjA0OTEwM30.ZPfntVP5Es2Sds6G9pbHkePJmgR737OPLihJIYsER3c';
+  var DASHBOARD_URL='index.html';
+  var $=function(id){return document.getElementById(id);};
+  var state={payload:null,db:null,needConfirm:false};
+
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function fmt(n){return Number(n).toLocaleString('en-US');}
+  var MON={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  function parsePretty(s){var m=/^(\d{1,2}) (\w{3}) (\d{4})$/.exec(s||'');return m?Date.UTC(+m[3],MON[m[2]],+m[1]):null;}
+  function headers(){return {'apikey':DB_KEY,'Authorization':'Bearer '+DB_KEY,'Content-Type':'application/json'};}
+
+  // ── database status ──
+  function loadDbStatus(){
+    return fetch(DB_URL+'/rest/v1/rpc/ir_get_all',{method:'POST',headers:headers(),body:'{}'})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(d){
+      var pairs=0;Object.keys(d.villa_state||{}).forEach(function(v){pairs+=Object.keys(d.villa_state[v]).length;});
+      state.db={date:d.meta&&d.meta.register_update_date||null,pairs:pairs,last:d.meta&&d.meta.last_upload_at||null,villas:Object.keys(d.villa_state||{}).length};
+      var el=$('dbstatus');
+      if(!state.db.last){el.className='msg warn';el.innerHTML='Database is <b>empty</b> — the dashboard is showing its built-in snapshot. Your first upload fills it.';}
+      else{el.className='msg ok';el.innerHTML='Register date: <b>'+esc(state.db.date)+'</b> · '+fmt(state.db.pairs)+' villa/ITP pairs · '+state.db.villas+' villas<br><span style="opacity:.8">Last upload: '+esc(state.db.last)+'</span>';}
+    }).catch(function(e){var el=$('dbstatus');el.className='msg err';el.textContent='Cannot reach the database ('+e.message+'). Check your internet connection.';});
+  }
+
+  // ── file handling ──
+  function handleFile(file){
+    if(!file)return;
+    $('result').innerHTML='';state.payload=null;$('btn').disabled=true;
+    $('summary').innerHTML='<div class="msg info">Reading <b>'+esc(file.name)+'</b>… (a few seconds)</div>';
+    var fr=new FileReader();
+    fr.onerror=function(){$('summary').innerHTML='<div class="msg err">Could not read the file.</div>';};
+    fr.onload=function(){
+      setTimeout(function(){
+        try{
+          if(typeof XLSX==='undefined')throw new Error('The spreadsheet library did not load (no internet?).');
+          var wb=XLSX.read(fr.result,{type:'array'});
+          var ws=wb.Sheets['IR'];
+          if(!ws)throw new Error('Sheet "IR" not found. Sheets in file: '+wb.SheetNames.join(', '));
+          var rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
+          var p=IRCore.buildPayload(rows);
+          if(!p.meta.register_update_date)throw new Error('No submission dates found in the IR sheet.');
+          state.payload=p;
+          showSummary(file.name,p);
+        }catch(e){$('summary').innerHTML='<div class="msg err">'+esc(e.message)+'</div>';}
+      },30);
+    };
+    fr.readAsArrayBuffer(file);
+  }
+
+  function showSummary(name,p){
+    var r=p.report, nv=Object.keys(p.villa_state).length, nd=Object.keys(p.daily).length, pairs=+p.meta.register_pairs;
+    var db=state.db&&state.db.last?state.db:null;
+    var dPairs=db?'<span class="delta">'+(pairs-db.pairs>=0?'+':'')+fmt(pairs-db.pairs)+' vs database</span>':'';
+    var h='<table>'+
+      '<tr><td>File</td><td>'+esc(name)+'</td></tr>'+
+      '<tr><td>Latest submission date</td><td>'+esc(p.meta.register_update_date)+'</td></tr>'+
+      '<tr><td>IR rows read</td><td>'+fmt(r.totalRows)+'</td></tr>'+
+      '<tr><td>Villa/ITP entries (ranges expanded)</td><td>'+fmt(r.expandedEntries)+'</td></tr>'+
+      '<tr><td>Villa/ITP pairs</td><td>'+fmt(pairs)+dPairs+'</td></tr>'+
+      '<tr><td>Villas · days · pending critical</td><td>'+nv+' · '+nd+' · '+fmt(p.crit.length)+'</td></tr>'+
+      '<tr><td>Range rows expanded (e.g. ITP 12 "12 to 20")</td><td>'+fmt(r.rangeRows)+'</td></tr>'+
+      '<tr><td>Cancelled rows ignored</td><td>'+fmt(r.cancelled)+'</td></tr></table>';
+    var warnings=[];state.needConfirm=false;
+    if(db){
+      var a=parsePretty(p.meta.register_update_date), b=parsePretty(db.date);
+      if(a!==null&&b!==null&&a<b){warnings.push('This file\'s latest date ('+esc(p.meta.register_update_date)+') is <b>older</b> than the database ('+esc(db.date)+').');state.needConfirm=true;}
+      if(pairs<db.pairs){warnings.push('This file has <b>fewer</b> villa/ITP pairs ('+fmt(pairs)+') than the database ('+fmt(db.pairs)+').');state.needConfirm=true;}
+    }
+    if(nv<300){warnings.push('Only '+nv+' villas found — the file may be incomplete.');state.needConfirm=true;}
+    warnings.forEach(function(w){h+='<div class="msg warn">⚠️ '+w+'</div>';});
+    if(state.needConfirm)h+='<label class="chk"><input type="checkbox" id="confirm"> I checked this and want to upload anyway</label>';
+    if(r.skipped.length){
+      h+='<details><summary>'+r.skipped.length+' rows skipped (no valid ITP number — e.g. "GEN" general IRs)</summary><div style="margin-top:6px;max-height:160px;overflow:auto">'+
+        r.skipped.slice(0,60).map(function(s){return 'Row '+s.row+': <code>'+esc(s.code)+'</code>';}).join('<br>')+'</div></details>';
+    }
+    $('summary').innerHTML=h;
+    var c=$('confirm');if(c)c.addEventListener('change',updateBtn);
+    updateBtn();
+  }
+
+  function updateBtn(){
+    var ok=!!state.payload&&$('pass').value.trim().length>0&&(!state.needConfirm||($('confirm')&&$('confirm').checked));
+    $('btn').disabled=!ok;
+    $('hint').textContent=!state.payload?'Choose a file first.':(!$('pass').value.trim()?'Enter the passcode.':(state.needConfirm&&!($('confirm')&&$('confirm').checked)?'Tick the confirmation above.':'Ready.'));
+  }
+
+  // ── upload ──
+  function upload(){
+    var p=state.payload;if(!p)return;
+    var body={p_passcode:$('pass').value.trim(),p_payload:{villa_state:p.villa_state,itp_stats:p.itp_stats,daily:p.daily,crit:p.crit,meta:p.meta}};
+    $('btn').disabled=true;
+    $('result').innerHTML='<div class="msg info">Uploading… please wait.</div>';
+    fetch(DB_URL+'/rest/v1/rpc/ir_replace_all',{method:'POST',headers:headers(),body:JSON.stringify(body)})
+    .then(function(r){return r.json().catch(function(){return {};}).then(function(j){return {ok:r.ok,j:j,status:r.status};});})
+    .then(function(x){
+      if(!x.ok){
+        var m=(x.j&&x.j.message)||('HTTP '+x.status);
+        $('result').innerHTML='<div class="msg err">'+(/passcode/i.test(m)?'❌ Wrong passcode.':'❌ Upload failed: '+esc(m))+' Nothing was changed.</div>';
+        updateBtn();return;
+      }
+      if($('remember').checked)localStorage.setItem('ir_up_pass',$('pass').value.trim());else localStorage.removeItem('ir_up_pass');
+      $('result').innerHTML='<div class="msg ok">✅ Done. Database now holds '+fmt(x.j.villas)+' villas, '+fmt(x.j.itps)+' ITPs, '+fmt(x.j.days)+' days, '+fmt(x.j.critical)+' pending critical IRs.<br><a href="'+DASHBOARD_URL+'">Open the dashboard →</a></div>';
+      loadDbStatus();
+    }).catch(function(e){$('result').innerHTML='<div class="msg err">❌ Network error: '+esc(e.message)+'. Nothing was changed.</div>';updateBtn();});
+  }
+
+  // ── wire up ──
+  var saved=null;try{saved=localStorage.getItem('ir_up_pass');}catch(e){}
+  if(saved){$('pass').value=saved;$('remember').checked=true;}
+  $('pass').addEventListener('input',updateBtn);
+  $('btn').addEventListener('click',upload);
+  $('drop').addEventListener('click',function(){$('file').click();});
+  $('file').addEventListener('change',function(e){handleFile(e.target.files[0]);});
+  ['dragenter','dragover'].forEach(function(ev){$('drop').addEventListener(ev,function(e){e.preventDefault();$('drop').classList.add('over');});});
+  ['dragleave','drop'].forEach(function(ev){$('drop').addEventListener(ev,function(e){e.preventDefault();$('drop').classList.remove('over');});});
+  $('drop').addEventListener('drop',function(e){if(e.dataTransfer.files&&e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+  loadDbStatus().then(function(){/* ready */});
+  window.__uploader={state:state,handleFile:handleFile,upload:upload};
+})();
+</script>
+</body>
+</html>
